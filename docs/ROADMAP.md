@@ -2,19 +2,19 @@
 
 Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle n'a pas été réellement validée. Aucun résultat n'est considéré acquis à la seule lecture de ce document.
 
-## PHASE 0 — Préparation et environnement (ACTIVE)
+## PHASE 0 — Préparation et environnement (TERMINÉE le 20/11/2026)
 - [x] Vérifier dépôt GitHub, statut de main, outils locaux (Git, Docker, Python, Node) : Git 2.55, Docker Compose 5.6, Node 24.19, npm 11.17, Python 3.14.6 et 3.12 disponibles via le lanceur py. La commande `python` est masquée par `C:\\Windows\\System32\\python` ; utiliser `py -3.12`.
 - [x] Cloner le dépôt sur le PC Windows.
-- [x] Créer un fichier .env local ignoré par Git ; rotation du mot de passe à confirmer.
+- [x] Créer un fichier .env local ignoré par Git ; changement du mot de passe exposé confirmé par l'utilisateur.
 - [x] Démarrer PostgreSQL via Docker Compose ; créer la base par variables POSTGRES_DB/POSTGRES_USER.
 - [x] Vérifier par commande SQL que la base btdigit_agro existe et est accessible.
 - [x] Valider docker compose config et vérifier .env ignoré/non suivi par Git.
 - [x] Confirmer l'authentification PostgreSQL via `psql -h db -W` : réponse SQL `1`, code de sortie `0`.
-- [ ] Confirmer que l'ancien mot de passe PostgreSQL divulgué a été remplacé dans la base ET dans `.env` (sans publier le secret).
-- [ ] Consigner la réussite de l'installation, puis seulement ouvrir la phase 1.
+- [x] Confirmer que l'ancien mot de passe PostgreSQL divulgué a été remplacé dans la base ET dans `.env` (déclaration explicite de l'utilisateur, sans publication du secret).
+- [x] Consigner la réussite de l'installation ; phase 1 ouverte après validation du test SQL réseau (`1`, code `0`).
 **Sortie** : capture ou sortie des commandes git status, docker compose ps, SELECT current_database() ; installation reproductible sur PC.
 
-## PHASE 1 — Socle technique et identité visuelle
+## PHASE 1 — Socle technique et identité visuelle (ACTIVE)
 - [ ] Initialiser Django + DRF avec configuration PostgreSQL et API /api/v1/health/.
 - [ ] Initialiser React + TypeScript + Vite + Tailwind, routes et composants accessibles.
 - [ ] Définir identité BTDIGIT AGRO : vert forêt #145C3B, vert agricole #78A344, or #D5A335, ivoire #F7F5EC, vert nuit #24392D.
