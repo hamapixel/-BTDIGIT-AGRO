@@ -17,6 +17,8 @@ Ce dépôt est en cours d'initialisation. Aucun backend, frontend, OTP ou paieme
 - Langues prévues : français, bambara, anglais ; monnaie : FCFA (XOF)
 
 ## Documentation
+- [Cahier des charges complet (prompt maître V2)](docs/CAHIER_DES_CHARGES_COMPLET.md)
+- [Prompt de démarrage Codex](docs/PROMPT_CODEX.md)
 - [Roadmap séquentielle](docs/ROADMAP.md)
 - [Consignes obligatoires pour Codex et les développeurs](AGENTS.md)
 - [Installation locale sous Windows](docs/INSTALLATION_WINDOWS.md)
