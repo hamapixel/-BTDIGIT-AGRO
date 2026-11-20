@@ -3,12 +3,12 @@
 Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle n'a pas été réellement validée. Aucun résultat n'est considéré acquis à la seule lecture de ce document.
 
 ## PHASE 0 — Préparation et environnement (ACTIVE)
-- [ ] Vérifier dépôt GitHub, statut de main, outils locaux (Git, Docker, Python, Node).
-- [ ] Cloner le dépôt sur le PC Windows.
-- [ ] Créer le fichier .env local à partir de .env.example, avec mot de passe différent.
-- [ ] Démarrer PostgreSQL via Docker Compose ; créer la base par variables POSTGRES_DB/POSTGRES_USER.
-- [ ] Vérifier par commande SQL que la base btdigit_agro existe et est accessible.
-- [ ] Valider docker compose config et l'absence de secrets dans Git.
+- [ ] Vérifier dépôt GitHub, statut de main, outils locaux (Git, Docker, Python, Node) : Git, Docker, Node vérifiés ; Python et npm à confirmer.
+- [x] Cloner le dépôt sur le PC Windows.
+- [x] Créer un fichier .env local ignoré par Git ; rotation du mot de passe à confirmer.
+- [x] Démarrer PostgreSQL via Docker Compose ; créer la base par variables POSTGRES_DB/POSTGRES_USER.
+- [x] Vérifier par commande SQL que la base btdigit_agro existe et est accessible.
+- [x] Valider docker compose config et vérifier .env ignoré/non suivi par Git.
 - [ ] Consigner la réussite de l'installation, puis seulement ouvrir la phase 1.
 **Sortie** : capture ou sortie des commandes git status, docker compose ps, SELECT current_database() ; installation reproductible sur PC.
 
