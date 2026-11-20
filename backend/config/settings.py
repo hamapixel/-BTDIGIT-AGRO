@@ -93,43 +93,14 @@ REST_FRAMEWORK = {
     # un déploiement multi-instance. Contrôle supplémentaire par contact en BD.
     "DEFAULT_THROTTLE_RATES": {
         "auth_register": "5/hour",
-        "auth_verify": "10/min",
         "auth_login": "10/min",
-        "auth_resend": "3/hour",
-        "auth_recover": "5/hour",
-        "auth_recover_confirm": "10/min",
         "auth_add_contact": "5/hour",
-        "auth_add_contact_confirm": "10/min",
+        "auth_change_password": "10/hour",
     },
 }
 
-# Désactivé par défaut tant que l'envoi réel n'est pas configuré.
-AGRO_EMAIL_VERIFICATION_ENABLED = _env_bool("AGRO_EMAIL_VERIFICATION_ENABLED", False)
-AGRO_SMS_VERIFICATION_ENABLED = _env_bool("AGRO_SMS_VERIFICATION_ENABLED", False)
-AGRO_SMS_PROVIDER = os.getenv("AGRO_SMS_PROVIDER", "").strip().lower()
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = os.getenv("EMAIL_HOST", "")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", True)
-EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", False)
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "")
-EMAIL_TIMEOUT = 10
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
-TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
-
-# WhatsApp Business Cloud API / Meta. Un modèle AUTHENTICATION approuvé avec
-# bouton « copier le code » est requis. Sans identifiants, canal indisponible.
-AGRO_WHATSAPP_VERIFICATION_ENABLED = _env_bool("AGRO_WHATSAPP_VERIFICATION_ENABLED", False)
-META_WHATSAPP_ACCESS_TOKEN = os.getenv("META_WHATSAPP_ACCESS_TOKEN", "").strip()
-META_WHATSAPP_PHONE_NUMBER_ID = os.getenv("META_WHATSAPP_PHONE_NUMBER_ID", "").strip()
-META_WHATSAPP_OTP_TEMPLATE = os.getenv("META_WHATSAPP_OTP_TEMPLATE", "").strip()
-META_WHATSAPP_TEMPLATE_LANGUAGE = os.getenv("META_WHATSAPP_TEMPLATE_LANGUAGE", "fr").strip()
-META_GRAPH_API_VERSION = os.getenv("META_GRAPH_API_VERSION", "v25.0").strip()
-
-
+# Inscription immédiate sans fournisseur SMS, WhatsApp ou SMTP.
+# Les contacts renseignés n'ont pas de preuve de possession.
 
 # Autorisations limitées au serveur frontend de développement.
 CORS_ALLOWED_ORIGINS = _env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
