@@ -30,9 +30,12 @@ function explainAPIError(data: APIError, status: number): string {
     return items.map(item => key === "detail" ? item : `${labels[key] || key} : ${item}`);
   });
   if (messages.length > 0) return messages.join(" ");
-  if (status === 429) return "Trop de tentatives. Réessayez un peu plus tard.";
-  if (status >= 500) return "Le serveur est momentanément indisponible.";
-  return "Veuillez vérifier les champs du formulaire.";
+  if (status === 403) return "Accès refusé (HTTP 403). La vérification de sécurité CSRF a échoué : rechargez la page. Si cela continue, vérifiez la configuration de l'API.";
+  if (status === 400) return "Formulaire refusé (HTTP 400). Vérifiez le téléphone et le mot de passe.";
+  if (status === 404) return "Adresse API introuvable (HTTP 404). Vérifiez que l'API Django est à jour.";
+  if (status === 429) return "Trop de tentatives (HTTP 429). Réessayez un peu plus tard.";
+  if (status >= 500) return `Le serveur a rencontré une erreur (HTTP ${status}).`;
+  return `Inscription ou connexion refusée (HTTP ${status}).`;
 }
 
 function cookie(name: string) {
@@ -51,7 +54,11 @@ async function postAPI(path: string, body: Record<string, string>) {
     },
     body: JSON.stringify(body),
   });
-  const data: APIError = await response.json().catch(() => ({}));
+  // Les refus CSRF Django renvoient du HTML, contrairement aux erreurs DRF
+  // au format JSON. Un JSON illisible doit conserver le statut HTTP visible.
+  const payload: unknown = await response.json().catch(() => null);
+  const data: APIError = payload !== null && typeof payload === "object" && !Array.isArray(payload)
+    ? payload as APIError : {};
   if (!response.ok) throw new Error(explainAPIError(data, response.status));
   return data;
 }
