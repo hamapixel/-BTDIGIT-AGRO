@@ -1,5 +1,38 @@
-# Phase 0 : PostgreSQL uniquement. Backend et frontend seront ajoutés à la phase 1.
+# Phase 1.1 : backend Django + PostgreSQL (développement local uniquement).
 services:
+  # Frontend Vite : serveur de développement local, pas une image de production.
+  web:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - agro_frontend_node_modules:/app/node_modules
+    ports:
+      - "127.0.0.1:${AGRO_WEB_PORT:-15173}:5173"
+    depends_on:
+      api:
+        condition: service_started
+
+  api:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_INTERNAL_PORT: "5432"
+      # Vite fait suivre /api à http://api:8000 ; ajouter ce host Docker uniquement en dev.
+      DJANGO_ALLOWED_HOSTS: "api,${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "127.0.0.1:${AGRO_API_PORT:-18080}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:17-alpine
     restart: unless-stopped
@@ -19,3 +52,4 @@ services:
 
 volumes:
   agro_postgres_data:
+  agro_frontend_node_modules:

@@ -15,13 +15,13 @@ Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle
 **Sortie** : capture ou sortie des commandes git status, docker compose ps, SELECT current_database() ; installation reproductible sur PC.
 
 ## PHASE 1 — Socle technique et identité visuelle (ACTIVE)
-- [ ] Initialiser Django + DRF avec configuration PostgreSQL et API /api/v1/health/.
-- [ ] Initialiser React + TypeScript + Vite + Tailwind, routes et composants accessibles.
-- [ ] Définir identité BTDIGIT AGRO : vert forêt #145C3B, vert agricole #78A344, or #D5A335, ivoire #F7F5EC, vert nuit #24392D.
-- [ ] Créer layout public, header/sticky desktop, sidebar fixe, barre mobile inférieure et thèmes clair/sombre.
-- [ ] Créer modèle utilisateur personnalisé AVANT les premières migrations.
-- [ ] Ajouter tests backend/frontend initiaux, formatage, CI GitHub Actions.
-- [ ] Vérifier affichage téléphone/tablette/PC et performances de base.
+- [x] Initialiser Django + DRF avec configuration PostgreSQL et API /api/v1/health/ (test local Windows confirmé).
+- [x] Initialiser React + TypeScript + Vite + Tailwind, page vitrine et aperçu professionnel (CI frontend réussie).
+- [x] Définir identité BTDIGIT AGRO : vert forêt #145C3B, vert agricole #78A344, or #D5A335, ivoire #F7F5EC, vert nuit #24392D.
+- [x] Créer layout public, header fixe, sidebar rétractable, barre mobile inférieure et thèmes clair/sombre ; scrolls indépendants validés par l'utilisateur sur PC.
+- [x] Créer modèle utilisateur personnalisé AVANT les premières migrations.
+- [ ] Ajouter tests backend/frontend initiaux, formatage, CI GitHub Actions : 1 test backend et 7 tests frontend réussis, formatage/outillage à finaliser.
+- [ ] Vérifier affichage téléphone/tablette/PC et performances de base : interaction hamburger/scrolls validée sur PC ; tests responsives et performance à compléter.
 **Sortie** : API et frontend démarrables, migrations reproductibles, tests et CI verts.
 
 ## PHASE 2 — Authentification, profils et organisations
