@@ -146,3 +146,115 @@
   .auth-art-circle { width: 140px; height: 140px; }
   .auth-right { padding-block: 52px 24px; }
 }
+
+
+/* Phase 2 : inscription compacte. Le titre et le logo partagent une même ligne. */
+.auth-card {
+  max-width: 425px;
+  padding: 22px 25px;
+}
+.auth-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  margin-bottom: 9px;
+}
+.auth-heading > div { min-width: 0; }
+.auth-heading .auth-card-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 43px;
+  width: 43px;
+  height: 43px;
+  border-radius: 12px;
+  margin: 0;
+}
+.auth-heading .auth-stage {
+  font-size: 9px;
+  letter-spacing: .045em;
+  line-height: 1.2;
+}
+.auth-heading h2 {
+  font-size: clamp(22px, 2.1vw, 27px);
+  line-height: 1.16;
+  margin: 4px 0 0;
+}
+.auth-description {
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+.auth-choice {
+  margin-bottom: 10px;
+  padding: 3px;
+  gap: 5px;
+}
+.auth-choice button { min-height: 41px; }
+.auth-warning, .auth-error, .auth-success {
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 8px 10px;
+  margin: 0 0 11px;
+}
+.auth-form { gap: 10px; }
+.auth-form > label { gap: 5px; }
+.auth-form input {
+  height: 43px;
+  font-size: 13px;
+}
+.auth-submit { min-height: 44px; margin-top: 2px; }
+.auth-switch { margin-top: 12px; }
+.auth-privacy { margin-top: 12px; padding-top: 10px; }
+.auth-shell--register .auth-card { max-width: 425px; }
+.auth-shell--login .auth-card { max-width: 400px; padding: 22px 25px; }
+.auth-shell--login .auth-heading { margin-bottom: 9px; }
+.auth-shell--login .auth-description { margin-bottom: 12px; }
+.auth-shell--login .auth-form { gap: 12px; }
+.auth-shell--login .auth-switch { margin-top: 12px; }
+.auth-shell--login .auth-privacy { margin-top: 11px; padding-top: 10px; }
+.auth-shell--register .auth-left h1 {
+  font-size: clamp(34px, 3.25vw, 50px);
+  line-height: 1.13;
+}
+.auth-shell--register .auth-art { max-height: 140px; min-height: 120px; margin-top: 10px; }
+.auth-shell--register .auth-art > svg { width: 140px; height: 140px; }
+.auth-shell--register .auth-art-circle { width: 145px; height: 145px; }
+.auth-shell--register .auth-left-content > p { line-height: 1.65; font-size: 13px; }
+.auth-shell--register .auth-left-footer { margin-top: 10px; }
+.auth-shell--register .auth-right { padding-block: 52px 24px; }
+
+/* Bouton d'inscription activé pour expliquer pourquoi l'envoi OTP est
+   impossible, sans contourner la vérification côté serveur. */
+.auth-submit:not(:disabled) { opacity: 1; cursor: pointer; }
+
+/* Un formulaire mobile doit être court, mais le scroll reste disponible
+   lorsqu'un clavier virtuel réduit la zone visible. */
+@media (max-width: 900px) {
+  .auth-shell--register .auth-right { padding: 46px 15px 23px; }
+  .auth-shell--register .auth-left { min-height: 62px; padding-block: 10px; }
+  .auth-shell--register .auth-card { padding: 18px 19px; }
+  .auth-shell--login .auth-card { padding: 19px 21px; }
+  .auth-shell--register .auth-back { top: 13px; }
+}
+@media (max-width: 550px) {
+  .auth-shell--register .auth-right {
+    padding: 47px 10px calc(16px + env(safe-area-inset-bottom));
+  }
+  .auth-shell--register .auth-card {
+    width: 100%;
+    padding: 17px 16px;
+  }
+  .auth-heading .auth-stage { font-size: 8px; }
+  .auth-heading h2 { font-size: 22px; }
+  .auth-heading { gap: 11px; }
+  .auth-heading .auth-card-icon { width: 39px; height: 39px; flex-basis: 39px; }
+  .auth-form input { min-height: 43px; }
+  .auth-submit { min-height: 45px; }
+  .auth-privacy { font-size: 9px; }
+}
+@media (max-width: 360px) {
+  .auth-shell--register .auth-card { padding: 15px 12px; }
+  .auth-heading h2 { font-size: 20px; }
+  .auth-choice button { font-size: 12px; }
+}
