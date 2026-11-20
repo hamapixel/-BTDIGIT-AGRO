@@ -71,6 +71,60 @@ class RegistrationWithoutOTPTests(TestCase):
         self.assertEqual(r.status_code, 400)
         self.assertEqual(get_user_model().objects.count(), 0)
 
+    def test_validation_error_identifies_password_field(self):
+        result = self.client.post(reverse("auth-register"), {
+            **self.data, "password": "1234567890",
+        })
+        self.assertEqual(result.status_code, 400)
+        self.assertIn("password", result.json())
+        self.assertTrue(result.json()["password"])
+
+    def test_phone_input_with_mali_74_prefix(self):
+        # Numéro fictif ; le numéro réel de l'utilisateur n'est jamais stocké dans les tests.
+        result = self.client.post(reverse("auth-register"), {
+            **self.data, "channel": "phone",
+            "contact": "+223 74 11 22 33",
+        })
+        self.assertEqual(result.status_code, 201, result.json())
+
+    def test_old_pending_otp_account_can_login_with_its_existing_password(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        User = get_user_model()
+        legacy = User.objects.create_user(
+            username="agro_legacy_pending", phone_e164="+22376123456",
+            password=PASSWORD, is_active=False,
+        )
+        VerificationChallenge.objects.create(
+            user=legacy, channel="phone", code_hash="legacy_only",
+            expires_at=timezone.now() + timedelta(minutes=5),
+        )
+        wrong = self.client.post(reverse("auth-login"), {
+            "identifier": "+22376123456", "password": "WrongPassword123",
+        })
+        self.assertEqual(wrong.status_code, 401)
+        legacy.refresh_from_db()
+        self.assertFalse(legacy.is_active)
+        ok = self.client.post(reverse("auth-login"), {
+            "identifier": "+22376123456", "password": PASSWORD,
+        })
+        self.assertEqual(ok.status_code, 200)
+        legacy.refresh_from_db()
+        self.assertTrue(legacy.is_active)
+        self.assertIsNone(legacy.phone_verified_at)
+
+    def test_account_disabled_without_prior_challenge_stays_disabled(self):
+        user = get_user_model().objects.create_user(
+            username="agro_disabled", email="disabled@example.com",
+            password=PASSWORD, is_active=False,
+        )
+        response = self.client.post(reverse("auth-login"), {
+            "identifier": "disabled@example.com", "password": PASSWORD,
+        })
+        self.assertEqual(response.status_code, 401)
+        user.refresh_from_db()
+        self.assertFalse(user.is_active)
+
     def test_bad_contact_rejected(self):
         r = self.client.post(reverse("auth-register"), {
             **self.data, "channel": "phone", "contact": "123",
