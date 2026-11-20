@@ -1,6 +1,6 @@
 # Phase 1.1 — Django + PostgreSQL (Windows PowerShell)
 
-**État : implémentation proposée dans la branche de travail ; tests Windows et CI à confirmer.** Ne pas fusionner tant que les contrôles n'ont pas réussi.
+**État : CI GitHub et tests Django en local confirmés ; vérification HTTP de l'API Windows encore nécessaire.** Ne pas fusionner tant que les contrôles n'ont pas réussi.
 
 ## 1. Récupérer la branche sans modifier main
 
@@ -55,10 +55,15 @@ Il est normal que l'installation initiale crée les tables Django et le modèle 
 
 ## 5. Démarrer l'API
 
+Le port hôte `8000` est déjà occupé par SUGU KURA sur le PC. BTDIGIT AGRO utilise maintenant `127.0.0.1:18080` sans arrêter l'autre projet ; dans le conteneur Django le port reste `8000`.
+
+Si `18080` est également occupé, choisir un autre port libre (ex. `18081`) via `AGRO_API_PORT=18081` dans `.env` puis recréer **seulement** le conteneur `api` avec `docker compose up -d --force-recreate api`. Adapter ensuite l'URL du test HTTP. Ne jamais écraser ou communiquer `.env`.
+
+
 ~~~powershell
-docker compose up -d api
+docker compose up -d --force-recreate api
 docker compose ps
-curl.exe http://127.0.0.1:8000/api/v1/health/
+curl.exe http://127.0.0.1:18080/api/v1/health/
 ~~~
 
 Réponse attendue lorsque PostgreSQL fonctionne :
