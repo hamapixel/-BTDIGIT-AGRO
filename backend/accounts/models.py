@@ -80,6 +80,7 @@ class Membership(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
     role = models.CharField(max_length=8, choices=ROLES, default="member")
     created_at = models.DateTimeField(auto_now_add=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [
