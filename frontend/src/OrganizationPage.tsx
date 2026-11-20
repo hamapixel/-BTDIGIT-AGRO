@@ -13,7 +13,8 @@ type Organization = {
   created_at: string;
 };
 type User = { full_name: string; email: string | null; phone: string | null; is_superadmin?: boolean };
-type Member = { id: string; user_id: string; name: string; role: string };
+type Member = { id: string; user_id: string; name: string; role: string; accepted: boolean };
+type Invitation = { id: string; organization_id: string; organization_name: string; role: string; kind: string };
 
 const kindNames = {
   producer: "Producteur",
@@ -55,6 +56,7 @@ export default function OrganizationPage() {
   const [allOrganizations, setAllOrganizations] = useState<Array<{id:string;name:string;kind:string;members_count:number}>>([]);
   const [activeId, setActiveId] = useState("");
   const [members, setMembers] = useState<Member[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(() => window.matchMedia?.("(max-width: 900px)")?.matches || false);
@@ -85,7 +87,8 @@ export default function OrganizationPage() {
     Promise.all([
       jsonAPI("/api/v1/auth/me/"),
       superadminView ? jsonAPI("/api/v1/superadmin/organizations/") : jsonAPI("/api/v1/organizations/"),
-    ]).then(([me, list]) => {
+      superadminView ? Promise.resolve({ invitations: [] }) : jsonAPI("/api/v1/organizations/invitations/"),
+    ]).then(([me, list, pending]) => {
       if (!mounted) return;
       setUser(me.user as User);
       if ((me.user as User).email && !(me.user as User).phone) {
@@ -98,6 +101,7 @@ export default function OrganizationPage() {
         const orgs = list.organizations as Organization[];
         setOrganizations(orgs);
         setActiveId(prev => prev || orgs[0]?.id || "");
+        setInvitations(pending.invitations as Invitation[]);
       }
     }).catch(e => { if (mounted) setError(e instanceof Error ? e.message : "Connexion requise."); })
       .finally(() => { if (mounted) setLoading(false); });
@@ -137,7 +141,7 @@ export default function OrganizationPage() {
       setInviteContact("");
       const data = await jsonAPI(`/api/v1/organizations/${current.id}/members/`);
       setMembers(data.members as Member[]);
-      setNotice("Compte vérifié ajouté à l'organisation.");
+      setNotice("Invitation créée : le compte doit l’accepter avant d’accéder à l’organisation.");
     } catch (e) { setError(e instanceof Error ? e.message : "Impossible d'ajouter ce compte."); }
     finally { setBusy(false); }
   };
@@ -164,6 +168,25 @@ export default function OrganizationPage() {
         setNotice("Nouveau contact vérifié. Vous pouvez l'utiliser pour vous connecter.");
       }
     } catch (e) { setError(e instanceof Error ? e.message : "Vérification impossible."); }
+    finally { setBusy(false); }
+  };
+
+  const answerInvitation = async (id: string, accept: boolean) => {
+    setBusy(true); setError(""); setNotice("");
+    try {
+      await jsonAPI(`/api/v1/organizations/invitations/${id}/`, {
+        method: accept ? "POST" : "DELETE",
+      });
+      const [orgs, invites] = await Promise.all([
+        jsonAPI("/api/v1/organizations/"),
+        jsonAPI("/api/v1/organizations/invitations/"),
+      ]);
+      const list = orgs.organizations as Organization[];
+      setOrganizations(list);
+      setInvitations(invites.invitations as Invitation[]);
+      if (accept) setActiveId(id => id || list[0]?.id || "");
+      setNotice(accept ? "Invitation acceptée : vous pouvez accéder à cette organisation." : "Invitation refusée.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Opération impossible."); }
     finally { setBusy(false); }
   };
 
@@ -217,6 +240,14 @@ export default function OrganizationPage() {
               )}
             </section>
           ) : <>
+            {invitations.length > 0 && <section className="org-panel org-invitation-section">
+              <div className="org-section-heading"><div><h2>Invitations à rejoindre une organisation</h2><p>L’accès n'est autorisé qu'après votre acceptation.</p></div><Users size={23}/></div>
+              {invitations.map(inv => <div className="org-invitation" key={inv.id}>
+                <div><strong>{inv.organization_name}</strong><small>{kindNames[inv.kind as Organization["kind"]] || inv.kind} · {roleNames[inv.role as keyof typeof roleNames] || inv.role}</small></div>
+                <div><button type="button" disabled={busy} onClick={() => answerInvitation(inv.id, true)}>Accepter</button>
+                  <button type="button" disabled={busy} onClick={() => answerInvitation(inv.id, false)}>Refuser</button></div>
+              </div>)}
+            </section>}
             <section className="org-two-columns">
               <form className="org-panel org-create" onSubmit={createOrg}>
                 <span className="org-panel-icon"><Building2 size={22}/></span>
@@ -283,7 +314,7 @@ export default function OrganizationPage() {
               {current.membership_role === "member" ? (
                 <p>Vous êtes collaborateur. L'administration des membres est réservée aux responsables.</p>
               ) : <>
-                <div className="org-member-list">{members.map(m => <div key={m.id}><strong>{m.name || "Compte vérifié"}</strong><span>{roleNames[m.role as keyof typeof roleNames] || m.role}</span></div>)}</div>
+                <div className="org-member-list">{members.map(m => <div key={m.id}><strong>{m.name || "Compte vérifié"}</strong><span>{roleNames[m.role as keyof typeof roleNames] || m.role}{!m.accepted ? " · Invitation en attente" : ""}</span></div>)}</div>
                 <form className="org-invite" onSubmit={addMember}>
                   <label>Email ou téléphone d'un compte déjà vérifié<input required value={inviteContact} onChange={e => setInviteContact(e.target.value)} placeholder="contact@exemple.com ou +223..."/></label>
                   <label>Rôle<select value={inviteRole} onChange={e => setInviteRole(e.target.value as "member" | "admin")}>
