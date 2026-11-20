@@ -62,6 +62,11 @@ export default function OrganizationPage() {
   const [kind, setKind] = useState<Organization["kind"]>("producer");
   const [inviteContact, setInviteContact] = useState("");
   const [inviteRole, setInviteRole] = useState<"member" | "admin">("member");
+  const [newContactChannel, setNewContactChannel] = useState<"email" | "phone">("email");
+  const [newContactDelivery, setNewContactDelivery] = useState<"email" | "whatsapp" | "sms">("email");
+  const [newContact, setNewContact] = useState("");
+  const [contactCode, setContactCode] = useState("");
+  const [contactStep, setContactStep] = useState<"request" | "confirm">("request");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -83,6 +88,10 @@ export default function OrganizationPage() {
     ]).then(([me, list]) => {
       if (!mounted) return;
       setUser(me.user as User);
+      if ((me.user as User).email && !(me.user as User).phone) {
+        setNewContactChannel("phone");
+        setNewContactDelivery("whatsapp");
+      }
       if (superadminView) {
         setAllOrganizations(list.organizations as typeof allOrganizations);
       } else {
@@ -130,6 +139,31 @@ export default function OrganizationPage() {
       setMembers(data.members as Member[]);
       setNotice("Compte vérifié ajouté à l'organisation.");
     } catch (e) { setError(e instanceof Error ? e.message : "Impossible d'ajouter ce compte."); }
+    finally { setBusy(false); }
+  };
+
+  const addSecondaryContact = async (event: FormEvent) => {
+    event.preventDefault(); setError(""); setNotice(""); setBusy(true);
+    try {
+      if (contactStep === "request") {
+        await jsonAPI("/api/v1/auth/contacts/request/", {
+          method: "POST", body: {
+            channel: newContactChannel, contact: newContact,
+            delivery: newContactChannel === "email" ? "email" : newContactDelivery,
+          },
+        });
+        setContactStep("confirm");
+        setNotice("Si ce contact est éligible, un code y a été demandé.");
+      } else {
+        await jsonAPI("/api/v1/auth/contacts/confirm/", {
+          method: "POST", body: { channel: newContactChannel, contact: newContact, code: contactCode },
+        });
+        const me = await jsonAPI("/api/v1/auth/me/");
+        setUser(me.user as User);
+        setContactStep("request"); setContactCode(""); setNewContact("");
+        setNotice("Nouveau contact vérifié. Vous pouvez l'utiliser pour vous connecter.");
+      }
+    } catch (e) { setError(e instanceof Error ? e.message : "Vérification impossible."); }
     finally { setBusy(false); }
   };
 
@@ -210,6 +244,40 @@ export default function OrganizationPage() {
                 )}
               </section>
             </section>
+            {user && (!user.email || !user.phone) && <section className="org-panel org-members-section">
+              <div className="org-section-heading"><div><h2>Ajouter un deuxième contact</h2><p>Vous pourrez utiliser votre email et votre téléphone après confirmation par code OTP.</p></div><ShieldCheck size={22}/></div>
+              <form className="org-contact-form" onSubmit={addSecondaryContact}>
+                <label>Type de contact
+                  <select value={newContactChannel} onChange={e => {
+                    const value = e.target.value as "email" | "phone";
+                    setNewContactChannel(value);
+                    setNewContactDelivery(value === "email" ? "email" : "whatsapp");
+                    setNewContact(""); setContactStep("request"); setError("");
+                  }}>
+                    {!user.email && <option value="email">Email</option>}
+                    {!user.phone && <option value="phone">Téléphone</option>}
+                  </select>
+                </label>
+                {newContactChannel === "phone" && <label>Réception OTP
+                  <select value={newContactDelivery} onChange={e => setNewContactDelivery(e.target.value as "whatsapp" | "sms")}>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="sms">SMS</option>
+                  </select>
+                </label>}
+                <label>{newContactChannel === "email" ? "Nouvelle adresse email" : "Nouveau numéro"}
+                  <input required type={newContactChannel === "email" ? "email" : "tel"}
+                    value={newContact} readOnly={contactStep === "confirm"} onChange={e => setNewContact(e.target.value)}
+                    placeholder={newContactChannel === "email" ? "adresse@exemple.com" : "+223 76 00 00 00"}/>
+                </label>
+                {contactStep === "confirm" && <label>Code reçu
+                  <input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}"
+                    value={contactCode} onChange={e => setContactCode(e.target.value.replace(/\D/g, "").slice(0,6))}/>
+                </label>}
+                <button type="submit" className="org-button" disabled={busy}>
+                  {contactStep === "request" ? "Envoyer le code" : "Vérifier le contact"} <ArrowRight size={16}/>
+                </button>
+              </form>
+            </section>}
             {current && <section className="org-panel org-members-section">
               <div className="org-section-heading"><div><h2>Équipe — {current.name}</h2><p>Vos collaborateurs ne peuvent pas consulter les autres organisations sans autorisation.</p></div><Users size={23}/></div>
               {current.membership_role === "member" ? (
