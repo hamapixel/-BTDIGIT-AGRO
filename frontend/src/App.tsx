@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import WorkspacePreview from "./WorkspacePreview";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowDownRight,
@@ -110,7 +111,7 @@ function Brand({ small = false }: { small?: boolean }) {
   );
 }
 
-export default function App() {
+function PublicLanding() {
   const [theme, setTheme] = useState<Theme>("light");
   const [menuOpen, setMenuOpen] = useState(false);
   const [noticeOpen, setNoticeOpen] = useState(false);
@@ -241,7 +242,7 @@ export default function App() {
 
         <section className="status-section" id="etat" aria-labelledby="status-title">
           <div className="content-width status-content">
-            <div className="status-copy"><span className="eyebrow"><ShieldCheck size={17}/> PROJET EN CONSTRUCTION</span><h2 id="status-title">Une plateforme construite étape par étape.</h2><p>L'application est en cours de développement. L'inscription, les annonces et les transactions seront activées progressivement après vérification.</p><div className="status-live" role="status"><span className={`health-dot health-${health}`}/>{health === "online" ? "API Django et PostgreSQL connectés" : health === "loading" ? "Vérification de l'API en cours…" : "API indisponible ou non joignable"}<span className="status-subtle">État réel de l'environnement local</span></div></div>
+            <div className="status-copy"><span className="eyebrow"><ShieldCheck size={17}/> PROJET EN CONSTRUCTION</span><h2 id="status-title">Une plateforme construite étape par étape.</h2><p>L'application est en cours de développement. L'inscription, les annonces et les transactions seront activées progressivement après vérification.</p><div className="status-live" role="status"><span className={`health-dot health-${health}`}/>{health === "online" ? "API Django et PostgreSQL connectés" : health === "loading" ? "Vérification de l'API en cours…" : "API indisponible ou non joignable"}<span className="status-subtle">État réel de l'environnement local</span></div><a className="workspace-preview-link" href="/apercu">Voir l'aperçu de l'espace <ArrowRight size={17}/></a></div>
             <div className="status-panel"><div className="status-panel-header"><div className="status-mini-logo"><Sprout size={23}/></div><div><strong>BTDIGIT AGRO</strong><small>Fondation technique</small></div><span className="status-chip">Phase 1</span></div><div className="status-row"><ShieldCheck size={20}/><span>Architecture Django & PostgreSQL</span><Check size={17}/></div><div className="status-row status-pending"><Users size={20}/><span>Inscriptions et organisations</span><span>À venir</span></div><div className="status-row status-pending"><BarChart3 size={20}/><span>Catalogue et recherche intelligente</span><span>À venir</span></div><div className="status-panel-footer"><span>Pas de données commerciales fictives.</span><span>🇲🇱 Mali</span></div></div>
           </div>
         </section>
@@ -255,4 +256,9 @@ export default function App() {
       <span className="sr-only">{health === "offline" ? <CloudOff size={1}/> : <BadgeCheck size={1}/>}</span>
     </div>
   );
+}
+
+/** Deux pages de fondation en phase 1 ; routage métier ultérieur. */
+export default function App() {
+  return window.location.pathname === "/apercu" ? <WorkspacePreview /> : <PublicLanding />;
 }
