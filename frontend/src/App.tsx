@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import WorkspacePreview from "./WorkspacePreview";
+import AuthPage from "./AuthPage";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowDownRight,
@@ -114,7 +115,6 @@ function Brand({ small = false }: { small?: boolean }) {
 function PublicLanding() {
   const [theme, setTheme] = useState<Theme>("light");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [noticeOpen, setNoticeOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("");
   const [health, setHealth] = useState<Health>("loading");
@@ -161,14 +161,14 @@ function PublicLanding() {
             <button className="icon-button theme-button" aria-label={theme === "light" ? "Activer le mode sombre" : "Activer le mode clair"} onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
               {theme === "light" ? <Moon size={19} /> : <Sun size={19} />}
             </button>
-            <button className="header-login" onClick={() => setNoticeOpen(true)}>Se connecter</button>
-            <button className="button button-primary header-join" onClick={() => setNoticeOpen(true)}>Rejoindre AGRO <ArrowRight size={16}/></button>
+            <a className="header-login" href="/connexion">Se connecter</a>
+            <a className="button button-primary header-join" href="/inscription">Rejoindre AGRO <ArrowRight size={16}/></a>
             <button className="icon-button menu-toggle" aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X size={23}/> : <Menu size={23}/>}
             </button>
           </div>
         </div>
-        {menuOpen && <nav className="mobile-menu" aria-label="Navigation mobile">{links.map((link) => <a key={link.href} href={link.href} onClick={closeMenu}>{link.name}<ChevronRight size={17}/></a>)}<button onClick={() => { closeMenu(); setNoticeOpen(true); }}>Se connecter <ArrowRight size={16}/></button></nav>}
+        {menuOpen && <nav className="mobile-menu" aria-label="Navigation mobile">{links.map((link) => <a key={link.href} href={link.href} onClick={closeMenu}>{link.name}<ChevronRight size={17}/></a>)}<a href="/connexion" onClick={closeMenu}>Se connecter <ArrowRight size={16}/></a></nav>}
       </header>
 
       <main id="contenu">
@@ -250,9 +250,8 @@ function PublicLanding() {
 
       <footer className="site-footer"><div className="content-width footer-inner"><div><Brand small/><p>Une initiative numérique BTDIGIT, pour rapprocher les professionnels agricoles du Mali.</p></div><div className="footer-links"><a href="#categories">Catégories</a><a href="#fonctionnement">Fonctionnement</a><a href="#etat">État du projet</a></div><div className="footer-bottom"><span>© 2026 BTDIGIT AGRO. Tous droits réservés.</span><span>Conçu avec soin au Mali <MapPin size={14}/></span></div></div></footer>
 
-      <nav className="mobile-bottom-nav" aria-label="Navigation rapide"><a href="#accueil"><Home size={21}/><span>Accueil</span></a><a href="#categories"><Wheat size={21}/><span>Filières</span></a><a href="#fonctionnement"><BookOpen size={21}/><span>Découvrir</span></a><button onClick={() => setNoticeOpen(true)}><Users size={21}/><span>Compte</span></button></nav>
+      <nav className="mobile-bottom-nav" aria-label="Navigation rapide"><a href="#accueil"><Home size={21}/><span>Accueil</span></a><a href="#categories"><Wheat size={21}/><span>Filières</span></a><a href="#fonctionnement"><BookOpen size={21}/><span>Découvrir</span></a><a href="/connexion"><Users size={21}/><span>Compte</span></a></nav>
 
-      {noticeOpen && <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setNoticeOpen(false); }}><div role="dialog" aria-modal="true" aria-labelledby="notice-title" className="coming-modal"><button className="modal-close" aria-label="Fermer" onClick={() => setNoticeOpen(false)}><X size={20}/></button><div className="modal-icon"><Sprout size={29}/></div><span className="eyebrow">BIENTÔT DISPONIBLE</span><h2 id="notice-title">Votre espace agricole arrive.</h2><p>L'inscription sécurisée par numéro de téléphone ou email sera disponible à la phase 2. Pour le moment, explorez la présentation de BTDIGIT AGRO.</p><button className="button button-primary" onClick={() => setNoticeOpen(false)}>Compris <Check size={17}/></button></div></div>}
       <span className="sr-only">{health === "offline" ? <CloudOff size={1}/> : <BadgeCheck size={1}/>}</span>
     </div>
   );
@@ -260,5 +259,8 @@ function PublicLanding() {
 
 /** Deux pages de fondation en phase 1 ; routage métier ultérieur. */
 export default function App() {
-  return window.location.pathname === "/apercu" ? <WorkspacePreview /> : <PublicLanding />;
+  const path = window.location.pathname;
+  if (path === "/apercu") return <WorkspacePreview />;
+  if (["/inscription", "/connexion", "/verification"].includes(path)) return <AuthPage />;
+  return <PublicLanding />;
 }
