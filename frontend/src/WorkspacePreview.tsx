@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft, ArrowRight, BarChart3, Bell, BookOpen, Check, ChevronDown,
+  ArrowLeft, ArrowRight, BarChart3, Bell, BookOpen, Check,
   ClipboardList, Home, LayoutDashboard, Leaf, Menu, Moon, Package,
   Search, Settings, ShieldCheck, Sprout, Sun, Truck, Users, Wheat, X,
 } from "lucide-react";
