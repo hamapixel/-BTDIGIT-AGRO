@@ -25,6 +25,8 @@ Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle
 **Sortie** : API et frontend démarrables, migrations reproductibles, CI verte ; PR #3 fusionnée (`f380d9d`) sur validation explicite de l'utilisateur. Restent à compléter avant le lancement : essais sur appareils réels et mesures de performance.
 
 ## PHASE 2 — Authentification, profils et organisations (ACTIVE, étapes 2.1 à 2.3)
+**Progression 2.1 au 20/11/2026 :** fondations backend et React développées dans la PR #5 (brouillon) ; GitHub Actions : 13 tests Django et 9 tests React réussis, migrations sans écarts. L'inscription fonctionnelle par vrai email/SMS attend la configuration et le test du fournisseur. La validation Windows et les étapes 2.2/2.3 restent ouvertes. Ne pas considérer la phase 2 comme terminée. Guide : docs/PHASE_02_AUTH_WINDOWS.md.
+
 - [ ] Choix explicite inscription par téléphone OU email.
 - [ ] Téléphone normalisé E.164 (dont +223), email normalisé et un contact principal vérifié.
 - [ ] OTP SMS via prestataire réel ou OTP/lien email via SMTP réel ; mode test isolé.
