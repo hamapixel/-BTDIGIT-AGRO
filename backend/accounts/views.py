@@ -178,7 +178,7 @@ class LoginView(APIView):
         user = User.objects.filter(**query).first()
         authenticated = (
             authenticate(request, username=user.username, password=serializer.validated_data["password"])
-            if user and user.is_active and (user.email_verified_at or user.phone_verified_at)
+            if user and user.is_active and ((user.is_superuser and user.is_staff) or user.email_verified_at or user.phone_verified_at)
             else None
         )
         if authenticated is None:
@@ -195,6 +195,7 @@ def _public_user(user: User) -> dict:
         "phone": user.phone_e164,
         "email_verified": bool(user.email_verified_at),
         "phone_verified": bool(user.phone_verified_at),
+        "is_superadmin": bool(user.is_superuser and user.is_staff),
     }
 
 
