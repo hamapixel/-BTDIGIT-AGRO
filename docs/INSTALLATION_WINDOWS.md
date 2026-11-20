@@ -9,7 +9,8 @@ Installer et lancer Docker Desktop (moteur Docker opérationnel), Git, Python ma
 git --version
 docker --version
 docker compose version
-python --version
+py -3.12 --version
+py -3.12 -m pip --version
 node --version
 npm --version
 ~~~
@@ -50,6 +51,32 @@ docker compose exec db psql -U btdigit_agro -d btdigit_agro -c "SELECT current_d
 ~~~
 
 Résultat attendu : base btdigit_agro, utilisateur btdigit_agro. Si une autre base existe déjà dans le volume, modifier POSTGRES_DB ne crée PAS rétroactivement une nouvelle base ; utiliser une commande CREATE DATABASE adaptée sans supprimer les données existantes.
+
+## 4 bis. Sécurité : changement du mot de passe et test TCP
+
+Si un mot de passe PostgreSQL a été partagé ou affiché dans un journal, il doit être remplacé **dans PostgreSQL lui-même**, puis dans le fichier local `.env`. Modifier `.env` sans changer le rôle PostgreSQL ne met pas à jour le mot de passe de la base déjà initialisée.
+
+Pour changer le mot de passe sans le publier dans PowerShell ni dans Git :
+
+~~~powershell
+docker compose exec db psql -U btdigit_agro -d btdigit_agro
+~~~
+
+Puis saisir dans `psql` : `\password btdigit_agro` et confirmer le nouveau mot de passe deux fois ; quitter avec `\q`. Mettre le même secret dans `.env`, puis recréer uniquement le conteneur (sans effacer le volume) :
+
+~~~powershell
+docker compose up -d --force-recreate db
+docker compose ps
+~~~
+
+Tester la connexion **TCP avec mot de passe** depuis le conteneur :
+
+~~~powershell
+docker compose exec db psql -h 127.0.0.1 -U btdigit_agro -d btdigit_agro -tAc "SELECT 1;"
+$LASTEXITCODE
+~~~
+
+La sortie attendue est `1` puis `0`, après saisie du mot de passe si demandé. Sous PowerShell, les combinaisons `sh -c` et guillemets imbriqués peuvent produire un résultat ambigu ; privilégier l'appel direct ci-dessus. Ne pas confondre une connexion locale `psql` sans `-h` (potentiellement sans authentification par mot de passe) avec ce test TCP. Ne jamais publier le mot de passe, `.env`, ni `docker compose config` complet.
 
 ## 5. Vérifier et arrêter sans supprimer les données
 ~~~powershell
