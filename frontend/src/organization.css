@@ -115,3 +115,17 @@
   .org-invite label:first-child{grid-column:auto}
 }
 @media(prefers-reduced-motion:reduce){.org-sidebar,.org-main{transition:none}}
+
+.org-contact-form {
+  display: grid!important;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  align-items: end;
+  gap: 13px!important;
+  margin-top: 18px;
+}
+.org-contact-form label { min-width:0; }
+.org-contact-form button { justify-self:start; }
+@media(max-width:650px) {
+  .org-contact-form { grid-template-columns: 1fr; }
+  .org-contact-form button { width:100%; }
+}
