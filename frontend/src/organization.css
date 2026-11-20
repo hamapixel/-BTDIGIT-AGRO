@@ -141,3 +141,23 @@
 .org-invitation button:last-child{color:var(--org-muted);border-color:var(--org-border);background:var(--org-surface)}
 .org-invitation button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:550px){.org-invitation{flex-direction:column;align-items:flex-start}}
+
+.org-account-id {
+  margin: 18px 0;
+  padding: 15px;
+  border: 1px solid var(--org-border);
+  border-radius: 11px;
+  background: var(--org-bg);
+}
+.org-account-id input { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.org-account-id p,.org-muted-note {
+  color: var(--org-muted);
+  font-size: 11px;
+  line-height: 1.65;
+  margin: 10px 0 0;
+}
+.org-contact-form + .org-contact-form {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--org-border);
+}
