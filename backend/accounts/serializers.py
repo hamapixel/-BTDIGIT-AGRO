@@ -53,3 +53,52 @@ class LoginSerializer(serializers.Serializer):
             return normalize_contact(channel, identifier)
         except ValueError as exc:
             raise serializers.ValidationError("Identifiant invalide.") from exc
+
+
+class ContactDeliverySerializer(serializers.Serializer):
+    channel = serializers.ChoiceField(choices=["email", "phone"])
+    delivery = serializers.ChoiceField(choices=["email", "whatsapp", "sms"], required=False)
+    contact = serializers.CharField(max_length=254)
+
+    def validate(self, data):
+        try:
+            data["contact"] = normalize_contact(data["channel"], data["contact"])
+        except ValueError as exc:
+            raise serializers.ValidationError({"contact": str(exc)}) from exc
+        method = data.get("delivery")
+        if method and (
+            (data["channel"] == "email" and method != "email")
+            or (data["channel"] == "phone" and method not in ("whatsapp", "sms"))
+        ):
+            raise serializers.ValidationError({"delivery": "Méthode incompatible avec ce contact."})
+        return data
+
+
+class PasswordResetConfirmSerializer(ContactDeliverySerializer):
+    code = serializers.RegexField(regex=r"^\d{6}$")
+    password = serializers.CharField(min_length=10, max_length=128, write_only=True, trim_whitespace=False)
+
+    def validate(self, data):
+        data = super().validate(data)
+        try:
+            validate_password(data["password"])
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({"password": list(exc.messages)}) from exc
+        return data
+
+
+class OrganizationSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=180, min_length=2, trim_whitespace=True)
+    kind = serializers.ChoiceField(choices=["producer", "cooperative", "buyer", "carrier"])
+
+
+class AddMemberSerializer(serializers.Serializer):
+    identifier = serializers.CharField(max_length=254)
+    role = serializers.ChoiceField(choices=["member", "admin"], default="member")
+
+    def validate_identifier(self, identifier):
+        channel = "email" if "@" in identifier else "phone"
+        try:
+            return normalize_contact(channel, identifier)
+        except ValueError as exc:
+            raise serializers.ValidationError("Contact invalide.") from exc
