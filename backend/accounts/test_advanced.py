@@ -163,11 +163,11 @@ class OrganizationIsolationTests(TestCase):
         org = Organization.objects.create(
             name="Agriculteurs Koulikoro", kind="producer", created_by=self.owner,
         )
-        Membership.objects.create(organization=org, user=self.owner, role="owner")
+        Membership.objects.create(organization=org, user=self.owner, role="owner", accepted_at=timezone.now())
         other_org = Organization.objects.create(
             name="Acheteurs Bamako", kind="buyer", created_by=self.other,
         )
-        Membership.objects.create(organization=other_org, user=self.other, role="owner")
+        Membership.objects.create(organization=other_org, user=self.other, role="owner", accepted_at=timezone.now())
 
         self.client.force_login(self.owner)
         invite = self.client.post(reverse("org-members", args=[org.id]), {
@@ -182,6 +182,12 @@ class OrganizationIsolationTests(TestCase):
 
         member_client = Client()
         member_client.force_login(self.member_user)
+        self.assertEqual(member_client.get(reverse("org-detail", args=[org.id])).status_code, 404)
+        invitations = member_client.get(reverse("org-invitations"))
+        self.assertEqual(invitations.status_code, 200)
+        self.assertEqual(invitations.json()["invitations"][0]["id"], member_id)
+        accept = member_client.post(reverse("org-invitation-action", args=[member_id]))
+        self.assertEqual(accept.status_code, 200)
         self.assertEqual(member_client.get(reverse("org-detail", args=[org.id])).status_code, 200)
         self.assertEqual(member_client.get(reverse("org-members", args=[org.id])).status_code, 403)
         self.assertEqual(member_client.patch(
