@@ -8,6 +8,7 @@ from accounts.advanced_views import (
     ResendVerificationView, PasswordResetRequestView, PasswordResetConfirmView,
     OrganizationListCreateView, OrganizationDetailView, OrganizationMembersView,
     OrganizationMemberDetailView, SuperadminOrganizationsView,
+    OrganizationInvitationsView, OrganizationInvitationActionView,
 )
 
 urlpatterns = [
@@ -26,6 +27,8 @@ urlpatterns = [
     path("api/v1/auth/contacts/request/", ContactAddRequestView.as_view(), name="auth-contact-request"),
     path("api/v1/auth/contacts/confirm/", ContactAddConfirmView.as_view(), name="auth-contact-confirm"),
     path("api/v1/organizations/", OrganizationListCreateView.as_view(), name="org-list"),
+    path("api/v1/organizations/invitations/", OrganizationInvitationsView.as_view(), name="org-invitations"),
+    path("api/v1/organizations/invitations/<uuid:invitation_id>/", OrganizationInvitationActionView.as_view(), name="org-invitation-action"),
     path("api/v1/organizations/<uuid:pk>/", OrganizationDetailView.as_view(), name="org-detail"),
     path("api/v1/organizations/<uuid:pk>/members/", OrganizationMembersView.as_view(), name="org-members"),
     path("api/v1/organizations/<uuid:pk>/members/<uuid:member_id>/", OrganizationMemberDetailView.as_view(), name="org-member-detail"),
