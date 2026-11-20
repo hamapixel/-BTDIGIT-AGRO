@@ -247,11 +247,15 @@ class OrganizationMembersView(APIView):
         ).first()
         if user is None or not user.is_active or not (user.email_verified_at or user.phone_verified_at):
             return Response({"detail": "Ce compte vérifié n'est pas disponible."}, status=400)
+        if Membership.objects.filter(user=user, organization_id=pk).exists():
+            return Response({"detail": "Ce compte est déjà membre."}, status=400)
         try:
-            member = Membership.objects.create(
-                user=user, organization_id=pk, role=serializer.validated_data["role"]
-            )
+            with transaction.atomic():
+                member = Membership.objects.create(
+                    user=user, organization_id=pk, role=serializer.validated_data["role"]
+                )
         except IntegrityError:
+            # savepoint rollback ; la transaction externe et les futures requêtes restent valides.
             return Response({"detail": "Ce compte est déjà membre."}, status=400)
         return Response({"member": {"id": str(member.id), "role": member.role}}, status=201)
 
