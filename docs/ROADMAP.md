@@ -24,15 +24,30 @@ Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle
 - [x] Validation utilisateur des interactions UI PC et accord explicite pour fusionner la phase 1 ; **réserve** : mesures de performance et tests sur de vrais téléphones/tablettes non démontrés, à suivre avant tout lancement public.
 **Sortie** : API et frontend démarrables, migrations reproductibles, CI verte ; PR #3 fusionnée (`f380d9d`) sur validation explicite de l'utilisateur. Restent à compléter avant le lancement : essais sur appareils réels et mesures de performance.
 
-## PHASE 2 — Authentification, profils et organisations
-- [ ] Choix explicite inscription par téléphone OU email.
-- [ ] Téléphone normalisé E.164 (dont +223), email normalisé et un contact principal vérifié.
-- [ ] OTP SMS via prestataire réel ou OTP/lien email via SMTP réel ; mode test isolé.
-- [ ] Mots de passe sûrs, expiration/limites d'OTP, récupération de compte, gestion sessions.
-- [ ] Choix du rôle (producteur, coopérative, acheteur professionnel, transporteur).
-- [ ] Création organisation, membres et permissions côté API ; super admin distinct.
-- [ ] Tester non-divulgation entre organisations, changements de profil et refus d'accès.
-**Sortie** : inscription, vérification et connexion réelles avec tests ; canaux non configurés signalés indisponibles.
+## PHASE 2 — Authentification, profils et organisations (EN VALIDATION)
+
+**Changement de décision utilisateur, 20/11/2026 :** inscription et connexion
+**sans code OTP**. Les canaux WhatsApp, SMS et email ne sont plus nécessaires
+pour créer un compte. PR #5 en brouillon et `main` inchangée.
+
+- [x] Inscription immédiate par numéro E.164 (+223 Mali inclus) ou email normalisé, nom et mot de passe fort.
+- [x] Session ouverte dès la création du compte, reconnexion par contact et mot de passe, déconnexion et CSRF.
+- [x] Aucun champ OTP ni envoi de code dans le parcours actif, aucune API OTP routée.
+- [x] Contact déclaré **non vérifié** : ne jamais présenter l'email ou le téléphone comme certifié.
+- [x] Changement du mot de passe et ajout d'un contact depuis la session avec saisie du mot de passe actuel.
+- [x] Organisations métier (producteur, coopérative, acheteur, transporteur), droits owner/admin/member et superadmin.
+- [x] Invitations par identifiant UUID volontairement partagé, acceptation obligatoire avant accès.
+- [ ] Vérifier CI GitHub Actions backend/frontend sur cette nouvelle stratégie sans OTP.
+- [ ] Valider migrations et tests Windows, formulaire mobile/tablette/PC, connexion et déconnexion de bout en bout.
+- [ ] Avant une production ouverte : protection renforcée des inscriptions abusives, récupération sécurisée de mot de passe, audit et cache partagé.
+
+**Validation Windows confirmée :** connexion réussie et page `/espace` affichée, origines CSRF locales corrigées et `/api/v1/health/` fonctionnelle. Correction du titre de connexion sur la branche : CI **26 Django + 18 React** verte. Reste à valider la nouvelle présentation mobile et le parcours réel de création d'organisation et d'invitation.
+
+**Réserve importante :** sans preuve de possession des coordonnées, le système
+est plus simple mais exposé à la réservation abusive de numéros/emails.
+La récupération publique par email/numéro seul est volontairement désactivée.
+Les tables historiques OTP restent en place pour préserver la base mais sont
+inutilisées. **Ne pas fusionner la PR #5 avant les contrôles locaux et accord humain.**
 
 ## PHASE 3 — Catalogue, annonces et recherche intelligente (PRIORITÉ PRODUIT)
 - [ ] Catégories, régions/cercles/communes administrables, annonces, récoltes, photos et unités.

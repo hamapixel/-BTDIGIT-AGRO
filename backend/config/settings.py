@@ -89,11 +89,30 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+    # Limites de démarrage, par IP : le cache partagé (Redis) sera requis avant
+    # un déploiement multi-instance. Contrôle supplémentaire par contact en BD.
+    "DEFAULT_THROTTLE_RATES": {
+        "auth_register": "5/hour",
+        "auth_login": "10/min",
+        "auth_add_contact": "5/hour",
+        "auth_change_password": "10/hour",
+    },
 }
 
+# Inscription immédiate sans fournisseur SMS, WhatsApp ou SMTP.
+# Les contacts renseignés n'ont pas de preuve de possession.
+
 # Autorisations limitées au serveur frontend de développement.
-CORS_ALLOWED_ORIGINS = _env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
-CSRF_TRUSTED_ORIGINS = _env_list("CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+# L'application tourne en local sur le port hôte 15173.
+# Vite relaie /api à l'hôte Docker "api": le navigateur envoie cependant
+# Origin: http://127.0.0.1:15173, qui doit être explicitement autorisé.
+# Aucun joker n'est utilisé : l'origine reste restreinte au développement.
+DEV_ORIGINS = (
+    "http://localhost:15173,http://127.0.0.1:15173,"
+    "http://localhost:5173,http://127.0.0.1:5173"
+)
+CORS_ALLOWED_ORIGINS = _env_list("CORS_ALLOWED_ORIGINS", DEV_ORIGINS)
+CSRF_TRUSTED_ORIGINS = _env_list("CSRF_TRUSTED_ORIGINS", DEV_ORIGINS)
 CORS_ALLOW_CREDENTIALS = False
 
 LANGUAGE_CODE = "fr"
