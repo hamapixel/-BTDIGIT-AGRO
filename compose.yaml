@@ -1,5 +1,22 @@
-# Phase 0 : PostgreSQL uniquement. Backend et frontend seront ajoutés à la phase 1.
+# Phase 1.1 : backend Django + PostgreSQL (développement local uniquement).
 services:
+  api:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_INTERNAL_PORT: "5432"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:17-alpine
     restart: unless-stopped
