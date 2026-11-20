@@ -22,32 +22,63 @@ const modules = [
 export default function WorkspacePreview() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia("(max-width: 900px)").matches
+      : false,
+  );
   const [profile, setProfile] = useState<"producteur" | "acheteur">("producteur");
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(max-width: 900px)");
+    const onBreakpointChange = (event: MediaQueryListEvent) => {
+      setIsMobileViewport(event.matches);
+      setSidebarOpen(false);
+    };
+    setIsMobileViewport(media.matches);
+    media.addEventListener("change", onBreakpointChange);
+    return () => media.removeEventListener("change", onBreakpointChange);
+  }, []);
+
+  const toggleSidebar = () => {
+    if (isMobileViewport) {
+      setSidebarOpen((opened) => !opened);
+    } else {
+      setSidebarCollapsed((collapsed) => !collapsed);
+    }
+  };
+
+  const sidebarExpanded = isMobileViewport ? sidebarOpen : !sidebarCollapsed;
+  const menuButtonLabel = isMobileViewport
+    ? sidebarOpen ? "Fermer le menu latéral" : "Ouvrir le menu latéral"
+    : sidebarCollapsed ? "Déployer le menu latéral" : "Réduire le menu latéral";
+
   const profileLabel = profile === "producteur" ? "Producteur" : "Acheteur professionnel";
 
   return (
-    <div className="workspace">
+    <div className={`workspace ${sidebarCollapsed ? "workspace-is-collapsed" : ""}`}>
       <a className="skip-link" href="#workspace-content">Aller au contenu</a>
-      <aside className={`workspace-sidebar ${sidebarOpen ? "sidebar-is-open" : ""}`} aria-label="Navigation de l'espace professionnel">
+      <aside id="workspace-sidebar" className={`workspace-sidebar ${sidebarOpen ? "sidebar-is-open" : ""}`} aria-label="Menu latéral" inert={isMobileViewport && !sidebarOpen}>
         <div className="workspace-brand"><a href="/" aria-label="Revenir au site BTDIGIT AGRO"><span className="workspace-mark"><Sprout size={22}/></span><strong>BTDIGIT <span>AGRO</span></strong></a><button className="workspace-sidebar-close" aria-label="Fermer la navigation" onClick={() => setSidebarOpen(false)}><X size={19}/></button></div>
         <div className="workspace-flag">APERÇU NON CONNECTÉ <span>Phase 1</span></div>
         <nav className="workspace-nav" aria-label="Navigation de l'espace professionnel">
           <span className="workspace-nav-heading">ESPACE PROFESSIONNEL</span>
-          {menu.map((item, i) => {const Icon = item.icon;return <a key={item.id} href={i === 0 ? "#workspace-content" : "#workspace-modules"} className={i === 0 ? "workspace-nav-active" : ""} onClick={() => setSidebarOpen(false)}><Icon size={19}/><span>{item.title}</span>{i !== 0 && <span className="workspace-soon">Bientôt</span>}</a>;})}
+          {menu.map((item, i) => {const Icon = item.icon;return <a key={item.id} href={i === 0 ? "#workspace-content" : "#workspace-modules"} className={i === 0 ? "workspace-nav-active" : ""} title={item.title} aria-label={item.title} onClick={() => setSidebarOpen(false)}><Icon size={19}/><span>{item.title}</span>{i !== 0 && <span className="workspace-soon">Bientôt</span>}</a>;})}
           <span className="workspace-nav-heading workspace-secondary-heading">AIDE & PARAMÈTRES</span>
-          <a href="/" className="workspace-nav-secondary"><Home size={19}/><span>Site public</span></a>
-          <a href="#workspace-modules" className="workspace-nav-secondary" onClick={() => setSidebarOpen(false)}><Settings size={19}/><span>À propos du projet</span></a>
+          <a href="/" className="workspace-nav-secondary" title="Site public" aria-label="Site public"><Home size={19}/><span>Site public</span></a>
+          <a href="#workspace-modules" className="workspace-nav-secondary" title="À propos du projet" aria-label="À propos du projet" onClick={() => setSidebarOpen(false)}><Settings size={19}/><span>À propos du projet</span></a>
         </nav>
         <div className="workspace-sidebar-foot"><span className="workspace-sidebar-foot-icon"><ShieldCheck size={19}/></span><strong>Plateforme en construction</strong><p>Les vraies données et permissions seront ajoutées progressivement.</p></div>
       </aside>
       {sidebarOpen && <button className="sidebar-scrim" aria-label="Fermer le menu" onClick={() => setSidebarOpen(false)}/>}
       <div className="workspace-main">
-        <header className="workspace-header"><div className="workspace-header-title"><button className="workspace-menu-button" aria-label="Ouvrir la navigation" onClick={() => setSidebarOpen(true)}><Menu size={23}/></button><div><span className="workspace-crumb">BTDIGIT AGRO / Espace professionnel</span><strong>Tableau de bord <span className="workspace-preview-label">APERÇU</span></strong></div></div><div className="workspace-header-actions"><button className="workspace-icon-button" aria-label={theme === "light" ? "Passer en mode sombre" : "Passer en mode clair"} onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? <Moon size={19}/> : <Sun size={19}/>}</button><span className="workspace-icon-button workspace-notif-icon" aria-label="Notifications indisponibles, phase ultérieure"><Bell size={19}/></span><span className="workspace-user-avatar" aria-label="Aperçu du profil">BA</span></div></header>
+        <header className="workspace-header"><div className="workspace-header-title"><button type="button" className="workspace-menu-button" aria-controls="workspace-sidebar" aria-expanded={sidebarExpanded} aria-label={menuButtonLabel} title={menuButtonLabel} onClick={toggleSidebar}><Menu size={23}/></button><div><span className="workspace-crumb">BTDIGIT AGRO / Espace professionnel</span><strong>Tableau de bord <span className="workspace-preview-label">APERÇU</span></strong></div></div><div className="workspace-header-actions"><button className="workspace-icon-button" aria-label={theme === "light" ? "Passer en mode sombre" : "Passer en mode clair"} onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? <Moon size={19}/> : <Sun size={19}/>}</button><span className="workspace-icon-button workspace-notif-icon" aria-label="Notifications indisponibles, phase ultérieure"><Bell size={19}/></span><span className="workspace-user-avatar" aria-label="Aperçu du profil">BA</span></div></header>
 
         <main id="workspace-content" className="workspace-content">
           <div className="workspace-intro"><div><span className="eyebrow"><Sprout size={15}/> UN ESPACE AGRICOLE MODERNE</span><h1>Bienvenue dans votre futur espace 👋</h1><p>Un aperçu de l'interface que les professionnels retrouveront sur BTDIGIT AGRO.</p></div><a className="workspace-return" href="/"><ArrowLeft size={16}/> Retour au site</a></div>
