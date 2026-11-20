@@ -80,7 +80,7 @@ export default function AuthPage() {
     event.preventDefault(); setError(""); setMessage(""); setBusy(true);
     try {
       if (step === "register") {
-        if (!channels[channel]) throw new Error("Ce canal n'est pas encore configuré pour les vérifications réelles.");
+        if (!channels[channel]) throw new Error(providerUnavailable);
         await postAPI("/api/v1/auth/register/", {
           channel, contact, full_name: fullName, password,
         });
@@ -114,6 +114,14 @@ export default function AuthPage() {
   const isVerify = step === "verify";
   const loginOnly = step === "login";
   const channelReady = channels[channel];
+  const channelLabel = channel === "phone" ? "SMS" : "email";
+  const providerUnavailable = `Inscription impossible pour le moment : l'envoi d'OTP par ${channelLabel} n'est pas configuré. Aucun compte n'a été créé et aucun code n'a été envoyé.`;
+  const showUnavailableMessage = () => {
+    setMessage("");
+    setError(loadingChannels
+      ? "Vérification des services d'inscription en cours. Réessayez dans un instant."
+      : providerUnavailable);
+  };
 
   return (
     <div className={`auth-shell auth-shell--${step}`}>
@@ -131,8 +139,6 @@ export default function AuthPage() {
       <main className="auth-right">
         <a href="/" className="auth-back"><ArrowLeft size={17}/> Retour à l'accueil</a>
         <div className="auth-card">
-          <div className="auth-card-icon"><Sprout size={26}/></div>
-
           {step === "complete" ? (
             <div className="auth-complete" role="status">
               <CheckCircle2 size={51}/>
@@ -147,8 +153,13 @@ export default function AuthPage() {
             </div>
           ) : (
             <>
-              <span className="auth-stage">ESPACE PROFESSIONNEL • PHASE 2</span>
-              <h2>{isRegister ? "Créer mon compte" : isVerify ? "Vérifier mon contact" : "Bon retour parmi nous !"}</h2>
+              <div className="auth-heading">
+                <span className="auth-card-icon"><Sprout size={22}/></span>
+                <div>
+                  <span className="auth-stage">ESPACE PROFESSIONNEL • PHASE 2</span>
+                  <h2>{isRegister ? "Créer mon compte" : isVerify ? "Vérifier mon contact" : "Bon retour parmi nous !"}</h2>
+                </div>
+              </div>
               <p className="auth-description">{isRegister ? "Inscrivez-vous avec votre téléphone ou votre email, selon votre préférence." : isVerify ? "Saisissez le code à 6 chiffres reçu sur votre contact." : "Connectez-vous avec votre téléphone ou votre adresse email."}</p>
 
               {isRegister && (
@@ -157,7 +168,12 @@ export default function AuthPage() {
                     <button className={channel === "phone" ? "selected" : ""} aria-pressed={channel === "phone"} type="button" onClick={() => { setChannel("phone"); setContact(""); setError(""); }}><Phone size={18}/> Téléphone</button>
                     <button className={channel === "email" ? "selected" : ""} aria-pressed={channel === "email"} type="button" onClick={() => { setChannel("email"); setContact(""); setError(""); }}><Mail size={18}/> Email</button>
                   </div>
-                  {!loadingChannels && !channelReady && <div className="auth-warning" role="status">{channel === "phone" ? "L'envoi de SMS" : "L'envoi d'emails"} n'est pas encore configuré. L'inscription par ce canal sera activée après connexion du prestataire réel.</div>}
+                  {!loadingChannels && !channelReady && (
+                    <div className="auth-warning" id="auth-service-warning" role="status">
+                      {channel === "phone" ? "L'envoi de SMS" : "L'envoi d'emails"} n'est pas encore configuré.
+                      <span> Le compte ne peut pas être créé avant l'activation d'un canal réel.</span>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -180,7 +196,13 @@ export default function AuthPage() {
                   </label>
                 )}
 
-                <button className="auth-submit" type="submit" disabled={busy || (isRegister && (loadingChannels || !channelReady))}>
+                <button
+                  className="auth-submit"
+                  type={isRegister && (loadingChannels || !channelReady) ? "button" : "submit"}
+                  onClick={isRegister && (loadingChannels || !channelReady) ? showUnavailableMessage : undefined}
+                  disabled={busy}
+                  aria-describedby={isRegister && !channelReady && !loadingChannels ? "auth-service-warning" : undefined}
+                >
                   {busy ? "Traitement en cours…" : isRegister ? "Créer mon compte" : isVerify ? "Vérifier le code" : "Me connecter"}
                   {!busy && <ArrowRight size={19}/>}
                 </button>
