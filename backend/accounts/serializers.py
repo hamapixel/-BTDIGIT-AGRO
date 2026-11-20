@@ -47,15 +47,9 @@ class OrganizationSerializer(serializers.Serializer):
 
 
 class AddMemberSerializer(serializers.Serializer):
-    identifier = serializers.CharField(max_length=254)
+    # UUID communiqué par la personne invitée, pas un contact auto-déclaré.
+    user_id = serializers.UUIDField()
     role = serializers.ChoiceField(choices=["member", "admin"], default="member")
-
-    def validate_identifier(self, identifier):
-        channel = "email" if "@" in identifier else "phone"
-        try:
-            return normalize_contact(channel, identifier)
-        except ValueError as exc:
-            raise serializers.ValidationError("Contact invalide.") from exc
 
 
 class ChangePasswordSerializer(serializers.Serializer):
