@@ -181,6 +181,9 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     render(<App />);
     expect(screen.getByRole("heading", { name: "Mot de passe oublié ?" })).toBeInTheDocument();
     expect(await screen.findByText(/Envoi OTP par email indisponible/)).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("nom@exemple.com"), {
+      target: { value: "test@example.com" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Recevoir mon code" }));
     expect(screen.getByRole("alert")).toHaveTextContent("aucun OTP ne peut être envoyé");
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
