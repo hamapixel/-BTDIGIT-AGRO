@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from .models import User
+from .models import User, VerificationChallenge
 from .serializers import LoginSerializer, RegisterSerializer
 
 
@@ -100,6 +100,19 @@ class LoginView(APIView):
         identifier = serializer.validated_data["identifier"]
         lookup = {"email": identifier} if "@" in identifier else {"phone_e164": identifier}
         user = User.objects.filter(**lookup).first()
+        # Compatibilité avec les inscriptions inachevées de l'ancienne phase
+        # OTP : seule la personne connaissant déjà le mot de passe peut
+        # terminer l'ouverture du compte. Ne jamais réactiver un compte
+        # désactivé administrativement sans challenge historique.
+        if (
+            user and not user.is_active and not user.is_staff and not user.is_superuser
+            and not user.email_verified_at and not user.phone_verified_at
+            and user.check_password(serializer.validated_data["password"])
+            and VerificationChallenge.objects.filter(user=user).exists()
+        ):
+            user.is_active = True
+            user.save(update_fields=["is_active"])
+
         authenticated = (
             authenticate(request, username=user.username, password=serializer.validated_data["password"])
             if user and user.is_active else None
