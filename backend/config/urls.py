@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import path
 from core.views import HealthView
 from accounts.views import ChannelsView, CSRFView, RegisterView, VerifyView, LoginView, LogoutView, MeView
+from accounts.contact_views import ContactAddRequestView, ContactAddConfirmView
 from accounts.advanced_views import (
     ResendVerificationView, PasswordResetRequestView, PasswordResetConfirmView,
     OrganizationListCreateView, OrganizationDetailView, OrganizationMembersView,
@@ -22,6 +23,8 @@ urlpatterns = [
     path("api/v1/auth/resend/", ResendVerificationView.as_view(), name="auth-resend"),
     path("api/v1/auth/recover/", PasswordResetRequestView.as_view(), name="auth-recover"),
     path("api/v1/auth/recover/confirm/", PasswordResetConfirmView.as_view(), name="auth-recover-confirm"),
+    path("api/v1/auth/contacts/request/", ContactAddRequestView.as_view(), name="auth-contact-request"),
+    path("api/v1/auth/contacts/confirm/", ContactAddConfirmView.as_view(), name="auth-contact-confirm"),
     path("api/v1/organizations/", OrganizationListCreateView.as_view(), name="org-list"),
     path("api/v1/organizations/<uuid:pk>/", OrganizationDetailView.as_view(), name="org-detail"),
     path("api/v1/organizations/<uuid:pk>/members/", OrganizationMembersView.as_view(), name="org-members"),
