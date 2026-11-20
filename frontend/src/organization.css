@@ -129,3 +129,15 @@
   .org-contact-form { grid-template-columns: 1fr; }
   .org-contact-form button { width:100%; }
 }
+
+.org-invitation-section { margin-bottom: 17px; }
+.org-invitation { display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--org-border);padding:15px 0; }
+.org-invitation:first-of-type { margin-top:14px; }
+.org-invitation strong,.org-invitation small { display:block; }
+.org-invitation strong { font-size:13px; }
+.org-invitation small { font-size:11px;color:var(--org-muted);margin-top:5px; }
+.org-invitation>div:last-child{display:flex;gap:8px;flex-wrap:wrap}
+.org-invitation button{border:1px solid #9cc4a0;border-radius:9px;background:#eaf3e7;color:#286d43;font-size:11px;font-weight:800;padding:10px 13px;cursor:pointer}
+.org-invitation button:last-child{color:var(--org-muted);border-color:var(--org-border);background:var(--org-surface)}
+.org-invitation button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:550px){.org-invitation{flex-direction:column;align-items:flex-start}}
