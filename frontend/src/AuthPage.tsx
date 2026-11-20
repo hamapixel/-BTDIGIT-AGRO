@@ -148,7 +148,7 @@ export default function AuthPage() {
               <CheckCircle2 size={51}/>
               <h2>Connexion réussie !</h2>
               <p>Bienvenue {signedInName}. Votre session est ouverte. Les fonctionnalités de votre organisation seront intégrées dans les étapes suivantes de la phase 2.</p>
-              <a href="/" className="auth-submit">Revenir à la vitrine <ArrowRight size={18}/></a>
+              <a href="/espace" className="auth-submit">Accéder à mon espace <ArrowRight size={18}/></a>
               <button type="button" className="auth-text-button" onClick={async () => {
                 try { await postAPI("/api/v1/auth/logout/", {}); setSignedInName(""); goto("login"); }
                 catch (err) { setError(err instanceof Error ? err.message : "Impossible de se déconnecter."); }
@@ -226,8 +226,27 @@ export default function AuthPage() {
                 </button>
               </form>
 
-              {isVerify ? <button className="auth-text-button" type="button" onClick={() => goto("register")}>Modifier mon contact</button> :
-                <p className="auth-switch">{isRegister ? "Vous avez déjà un compte ?" : "Pas encore de compte ?"} <button type="button" onClick={() => goto(isRegister ? "login" : "register")}>{isRegister ? "Se connecter" : "Créer un compte"}</button></p>}
+              {isVerify ? (
+                <div className="auth-verify-actions">
+                  <button className="auth-text-button" type="button" onClick={() => goto("register")}>Modifier mon contact</button>
+                  <button className="auth-text-button" type="button" disabled={busy} onClick={async () => {
+                    setBusy(true); setError(""); setMessage("");
+                    try {
+                      await postAPI("/api/v1/auth/resend/", {
+                        channel, contact, delivery: channel === "email" ? "email" : phoneDelivery,
+                      });
+                      setMessage("Si votre contact est éligible, un nouveau code a été demandé. Attendez une minute entre deux envois.");
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Renvoi indisponible.");
+                    } finally { setBusy(false); }
+                  }}>Renvoyer le code</button>
+                </div>
+              ) : (
+                <>
+                  <p className="auth-switch">{isRegister ? "Vous avez déjà un compte ?" : "Pas encore de compte ?"} <button type="button" onClick={() => goto(isRegister ? "login" : "register")}>{isRegister ? "Se connecter" : "Créer un compte"}</button></p>
+                  {loginOnly && <a href="/recuperation" className="auth-recovery-link">Mot de passe oublié ?</a>}
+                </>
+              )}
               <p className="auth-privacy"><ShieldCheck size={16}/> Vos informations ne sont pas partagées avec d'autres organisations.</p>
             </>
           )}
