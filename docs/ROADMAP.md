@@ -3,7 +3,7 @@
 Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle n'a pas été réellement validée. Aucun résultat n'est considéré acquis à la seule lecture de ce document.
 
 ## PHASE 0 — Préparation et environnement (ACTIVE)
-- [ ] Vérifier dépôt GitHub, statut de main, outils locaux (Git, Docker, Python, Node) : Git, Docker, Node vérifiés ; Python et npm à confirmer.
+- [x] Vérifier dépôt GitHub, statut de main, outils locaux (Git, Docker, Python, Node) : Git 2.55, Docker Compose 5.6, Node 24.19, npm 11.17, Python 3.14.6 et 3.12 disponibles via le lanceur py. La commande `python` est masquée par `C:\\Windows\\System32\\python` ; utiliser `py -3.12`.
 - [x] Cloner le dépôt sur le PC Windows.
 - [x] Créer un fichier .env local ignoré par Git ; rotation du mot de passe à confirmer.
 - [x] Démarrer PostgreSQL via Docker Compose ; créer la base par variables POSTGRES_DB/POSTGRES_USER.
