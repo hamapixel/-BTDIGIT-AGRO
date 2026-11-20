@@ -14,15 +14,15 @@ Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle
 - [x] Consigner la réussite de l'installation ; phase 1 ouverte après validation du test SQL réseau (`1`, code `0`).
 **Sortie** : capture ou sortie des commandes git status, docker compose ps, SELECT current_database() ; installation reproductible sur PC.
 
-## PHASE 1 — Socle technique et identité visuelle (ACTIVE)
+## PHASE 1 — Socle technique et identité visuelle (ACCEPTÉE / FUSIONNÉE le 20/11/2026)
 - [x] Initialiser Django + DRF avec configuration PostgreSQL et API /api/v1/health/ (test local Windows confirmé).
 - [x] Initialiser React + TypeScript + Vite + Tailwind, page vitrine et aperçu professionnel (CI frontend réussie).
 - [x] Définir identité BTDIGIT AGRO : vert forêt #145C3B, vert agricole #78A344, or #D5A335, ivoire #F7F5EC, vert nuit #24392D.
 - [x] Créer layout public, header fixe, sidebar rétractable, barre mobile inférieure et thèmes clair/sombre ; scrolls indépendants validés par l'utilisateur sur PC.
 - [x] Créer modèle utilisateur personnalisé AVANT les premières migrations.
-- [ ] Ajouter tests backend/frontend initiaux, formatage, CI GitHub Actions : 1 test backend et 7 tests frontend réussis, formatage/outillage à finaliser.
-- [ ] Vérifier affichage téléphone/tablette/PC et performances de base : interaction hamburger/scrolls validée sur PC ; tests responsives et performance à compléter.
-**Sortie** : API et frontend démarrables, migrations reproductibles, tests et CI verts.
+- [x] Ajouter tests backend/frontend initiaux et CI GitHub Actions : 1 test backend, 7 tests frontend, compilation TypeScript et migrations vérifiées. L'outillage de formatage reste une amélioration de maintenance.
+- [x] Validation utilisateur des interactions UI PC et accord explicite pour fusionner la phase 1 ; **réserve** : mesures de performance et tests sur de vrais téléphones/tablettes non démontrés, à suivre avant tout lancement public.
+**Sortie** : API et frontend démarrables, migrations reproductibles, CI verte ; PR #3 fusionnée (`f380d9d`) sur validation explicite de l'utilisateur. Restent à compléter avant le lancement : essais sur appareils réels et mesures de performance.
 
 ## PHASE 2 — Authentification, profils et organisations
 - [ ] Choix explicite inscription par téléphone OU email.
