@@ -27,7 +27,7 @@ docker compose up -d web
 docker compose ps
 ~~~
 
-Ouvrir **http://127.0.0.1:15173/** dans le navigateur. Le backend doit toujours être accessible sur **http://127.0.0.1:18080/api/v1/health/**. Le frontend appelle `/api/v1/health/` via le proxy Vite vers le service Docker `api:8000`. Les ports 8000 de SUGU KURA, 8020/8021 de StockPro et 55432 de PostgreSQL ne sont pas modifiés.
+Ouvrir **http://127.0.0.1:15173/** pour le site vitrine, puis **http://127.0.0.1:15173/apercu** pour la prévisualisation de l'espace professionnel (sidebar fixe sur ordinateur, navigation inférieure mobile). Le backend doit toujours être accessible sur **http://127.0.0.1:18080/api/v1/health/**. Le frontend appelle `/api/v1/health/` via le proxy Vite vers le service Docker `api:8000`. Les ports 8000 de SUGU KURA, 8020/8021 de StockPro et 55432 de PostgreSQL ne sont pas modifiés.
 
 Si le port 15173 est occupé, définir `AGRO_WEB_PORT=15174` dans le `.env` non suivi par Git et recréer **seulement** le service web avec `docker compose up -d --no-deps --force-recreate web`. Adapter l'URL en conséquence.
 
@@ -45,12 +45,14 @@ Tester également manuellement :
 3. Vérifier l'activation du mode sombre puis du mode clair.
 4. Taper `tomates` : seule la catégorie `Légumes` doit rester affichée.
 5. Cliquer `Se connecter` : afficher explicitement le message « disponible à la phase 2 ».
-6. Tester le menu mobile et la navigation inférieure.
-7. Couper temporairement **uniquement** l'API (si souhaité) : l'interface doit afficher un état d'indisponibilité, sans faux succès.
+6. Tester le menu mobile et la navigation inférieure sur la vitrine.
+7. Ouvrir `/apercu` : vérifier la sidebar desktop, le menu mobile et l'alternance Producteur / Acheteur ; toutes les métriques doivent indiquer « À venir », sans chiffres fictifs.
+8. Couper temporairement **uniquement** l'API (si souhaité) : l'interface doit afficher un état d'indisponibilité, sans faux succès.
 
 ## Limitations délibérées
 - Recherche de produits en temps réel et filtres PostgreSQL : **phase 3**. Le champ de recherche actuel filtre les noms de catégories locales et ne prétend pas chercher des offres B2B réelles.
 - Authentification SMS/email et organisations : **phase 2**.
+- L'écran `/apercu` est un **prototype d'interface**, pas une session utilisateur authentifiée : aucun indicateur commercial n'est opérationnel.
 - Tableaux de bord connectés, commandes, paiements et PWA installable : phases prévues dans la roadmap.
 - Le serveur Vite de développement ne constitue pas un déploiement de production.
 
