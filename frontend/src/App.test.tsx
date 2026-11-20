@@ -98,6 +98,7 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     }));
     render(<App />);
     expect(screen.getByRole("heading", { name: "Créer mon compte" })).toBeInTheDocument();
+    expect(document.querySelector(".auth-shell")).toHaveClass("auth-shell--register");
     expect(screen.getByRole("group", { name: "Choisir une méthode d'inscription" })).toBeInTheDocument();
     expect(await screen.findByText(/L'envoi de SMS.*n'est pas encore configuré/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Créer mon compte" })).toBeDisabled();
@@ -114,6 +115,8 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     )));
     render(<App />);
     expect(screen.getByRole("heading", { name: /Bon retour parmi nous/i })).toBeInTheDocument();
+    expect(document.querySelector(".auth-shell")).toHaveClass("auth-shell--login");
+    expect(screen.queryByText("Vous pouvez utiliser le contact vérifié lors de votre inscription.")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Me connecter" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Créer un compte" })).toBeInTheDocument();
   });
