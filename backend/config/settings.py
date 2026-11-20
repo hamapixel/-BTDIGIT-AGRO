@@ -115,6 +115,16 @@ TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
 
+# WhatsApp Business Cloud API / Meta. Un modèle AUTHENTICATION approuvé avec
+# bouton « copier le code » est requis. Sans identifiants, canal indisponible.
+AGRO_WHATSAPP_VERIFICATION_ENABLED = _env_bool("AGRO_WHATSAPP_VERIFICATION_ENABLED", False)
+META_WHATSAPP_ACCESS_TOKEN = os.getenv("META_WHATSAPP_ACCESS_TOKEN", "").strip()
+META_WHATSAPP_PHONE_NUMBER_ID = os.getenv("META_WHATSAPP_PHONE_NUMBER_ID", "").strip()
+META_WHATSAPP_OTP_TEMPLATE = os.getenv("META_WHATSAPP_OTP_TEMPLATE", "").strip()
+META_WHATSAPP_TEMPLATE_LANGUAGE = os.getenv("META_WHATSAPP_TEMPLATE_LANGUAGE", "fr").strip()
+META_GRAPH_API_VERSION = os.getenv("META_GRAPH_API_VERSION", "v25.0").strip()
+
+
 
 # Autorisations limitées au serveur frontend de développement.
 CORS_ALLOWED_ORIGINS = _env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
