@@ -23,6 +23,8 @@ services:
     environment:
       POSTGRES_HOST: db
       POSTGRES_INTERNAL_PORT: "5432"
+      # Vite fait suivre /api à http://api:8000 ; ajouter ce host Docker uniquement en dev.
+      DJANGO_ALLOWED_HOSTS: "api,${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}"
     volumes:
       - ./backend:/app
     ports:
