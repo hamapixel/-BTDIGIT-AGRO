@@ -151,6 +151,29 @@ describe("BTDIGIT AGRO — connexion directe sans OTP", () => {
     );
   });
 
+  it("signale précisément un refus CSRF HTML au lieu d'une erreur vague", async () => {
+    window.history.replaceState({}, "", "/inscription");
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(
+      url.includes("/auth/register/") ? {
+        ok: false, status: 403,
+        json: async () => { throw new SyntaxError("HTML, pas du JSON"); },
+      } : { ok: true, status: 200, json: async () => ({ status: "ok" }) },
+    )));
+    render(<App />);
+    fireEvent.change(screen.getByPlaceholderText("Ex. : Aminata Coulibaly"), {
+      target: { value: "Aminata Test" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("+223 76 00 00 00"), {
+      target: { value: "+22376123456" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("10 caractères minimum"), {
+      target: { value: "AgroPassword2026!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Créer mon compte" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("HTTP 403");
+    expect(screen.getByRole("alert")).toHaveTextContent("CSRF");
+  });
+
   it("connexion par identifiant et mot de passe sans étape supplémentaire", async () => {
     window.history.replaceState({}, "", "/connexion");
     const fetchMock = vi.fn((url: string) => Promise.resolve({
