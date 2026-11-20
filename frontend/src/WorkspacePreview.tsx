@@ -36,7 +36,7 @@ export default function WorkspacePreview() {
       <aside className={`workspace-sidebar ${sidebarOpen ? "sidebar-is-open" : ""}`} aria-label="Navigation de l'espace professionnel">
         <div className="workspace-brand"><a href="/" aria-label="Revenir au site BTDIGIT AGRO"><span className="workspace-mark"><Sprout size={22}/></span><strong>BTDIGIT <span>AGRO</span></strong></a><button className="workspace-sidebar-close" aria-label="Fermer la navigation" onClick={() => setSidebarOpen(false)}><X size={19}/></button></div>
         <div className="workspace-flag">APERÇU NON CONNECTÉ <span>Phase 1</span></div>
-        <nav className="workspace-nav">
+        <nav className="workspace-nav" aria-label="Navigation de l’espace professionnel">
           <span className="workspace-nav-heading">ESPACE PROFESSIONNEL</span>
           {menu.map((item, i) => {const Icon = item.icon;return <a key={item.id} href={i === 0 ? "#workspace-content" : "#workspace-modules"} className={i === 0 ? "workspace-nav-active" : ""} onClick={() => setSidebarOpen(false)}><Icon size={19}/><span>{item.title}</span>{i !== 0 && <span className="workspace-soon">Bientôt</span>}</a>;})}
           <span className="workspace-nav-heading workspace-secondary-heading">AIDE & PARAMÈTRES</span>
