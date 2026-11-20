@@ -102,6 +102,55 @@ describe("BTDIGIT AGRO — connexion directe sans OTP", () => {
     expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/auth/verify/"), expect.anything());
   });
 
+  it("explique la vraie erreur de mot de passe renvoyée par Django", async () => {
+    window.history.replaceState({}, "", "/inscription");
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(
+      url.includes("/auth/register/") ? {
+        ok: false, status: 400,
+        json: async () => ({ password: ["Ce mot de passe est trop courant."] }),
+      } : { ok: true, status: 200, json: async () => ({ status: "ok" }) },
+    )));
+    render(<App />);
+    fireEvent.change(screen.getByPlaceholderText("Ex. : Aminata Coulibaly"), {
+      target: { value: "Aminata Test" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("+223 76 00 00 00"), {
+      target: { value: "+22374112233" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("10 caractères minimum"), {
+      target: { value: "PasswordTooCommon!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Créer mon compte" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Mot de passe : Ce mot de passe est trop courant."
+    );
+    expect(screen.getByPlaceholderText("+223 76 00 00 00")).toHaveValue("+22374112233");
+  });
+
+  it("affiche la cause exacte si le numéro est refusé", async () => {
+    window.history.replaceState({}, "", "/inscription");
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(
+      url.includes("/auth/register/") ? {
+        ok: false, status: 400,
+        json: async () => ({ contact: ["Numéro de téléphone invalide."] }),
+      } : { ok: true, status: 200, json: async () => ({ status: "ok" }) },
+    )));
+    render(<App />);
+    fireEvent.change(screen.getByPlaceholderText("Ex. : Aminata Coulibaly"), {
+      target: { value: "Aminata Test" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("+223 76 00 00 00"), {
+      target: { value: "+22374112233" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("10 caractères minimum"), {
+      target: { value: "AgroPassword2026!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Créer mon compte" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Téléphone ou email : Numéro de téléphone invalide."
+    );
+  });
+
   it("connexion par identifiant et mot de passe sans étape supplémentaire", async () => {
     window.history.replaceState({}, "", "/connexion");
     const fetchMock = vi.fn((url: string) => Promise.resolve({
