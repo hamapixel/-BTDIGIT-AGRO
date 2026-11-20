@@ -41,6 +41,8 @@ pour créer un compte. PR #5 en brouillon et `main` inchangée.
 - [ ] Valider migrations et tests Windows, formulaire mobile/tablette/PC, connexion et déconnexion de bout en bout.
 - [ ] Avant une production ouverte : protection renforcée des inscriptions abusives, récupération sécurisée de mot de passe, audit et cache partagé.
 
+**Validation Windows confirmée :** connexion réussie et page `/espace` affichée, origines CSRF locales corrigées et `/api/v1/health/` fonctionnelle. Correction du titre de connexion sur la branche : CI **26 Django + 18 React** verte. Reste à valider la nouvelle présentation mobile et le parcours réel de création d'organisation et d'invitation.
+
 **Réserve importante :** sans preuve de possession des coordonnées, le système
 est plus simple mais exposé à la réservation abusive de numéros/emails.
 La récupération publique par email/numéro seul est volontairement désactivée.
