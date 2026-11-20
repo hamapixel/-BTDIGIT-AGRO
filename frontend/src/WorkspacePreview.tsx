@@ -62,7 +62,7 @@ export default function WorkspacePreview() {
   const profileLabel = profile === "producteur" ? "Producteur" : "Acheteur professionnel";
 
   return (
-    <div className={`workspace ${sidebarCollapsed ? "workspace-is-collapsed" : ""}`}>
+    <div className={`workspace ${sidebarCollapsed ? "workspace-is-collapsed" : ""} ${sidebarOpen ? "workspace-mobile-menu-open" : ""}`}>
       <a className="skip-link" href="#workspace-content">Aller au contenu</a>
       <aside id="workspace-sidebar" className={`workspace-sidebar ${sidebarOpen ? "sidebar-is-open" : ""}`} aria-label="Menu latéral" inert={isMobileViewport && !sidebarOpen}>
         <div className="workspace-brand"><a href="/" aria-label="Revenir au site BTDIGIT AGRO"><span className="workspace-mark"><Sprout size={22}/></span><strong>BTDIGIT <span>AGRO</span></strong></a><button className="workspace-sidebar-close" aria-label="Fermer la navigation" onClick={() => setSidebarOpen(false)}><X size={19}/></button></div>
