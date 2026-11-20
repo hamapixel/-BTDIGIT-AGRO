@@ -1,0 +1,41 @@
+# Secrets et environnement
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+backups/
+*.sql
+*.sql.gz
+
+# Python / Django
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+staticfiles/
+media/
+
+# Node / React
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Artefacts temporaires
+*.log
+tmp/
