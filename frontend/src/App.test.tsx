@@ -202,6 +202,7 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     vi.stubGlobal("fetch", vi.fn((path: string) => Promise.resolve({
       ok: true,
       json: async () => path.includes("/auth/me/") ? ({ user: mockUser }) :
+        path.includes("/members/") ? ({ members: [] }) :
         ({ organizations: [{ id: "123e4567-e89b-12d3-a456-426614174000",
           name: "Coopérative de test", kind: "cooperative", membership_role: "owner",
           created_at: "2026-11-20T00:00:00Z" }] }),
