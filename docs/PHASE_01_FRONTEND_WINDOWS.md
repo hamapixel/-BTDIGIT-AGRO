@@ -49,7 +49,10 @@ Tester également manuellement :
 5. Cliquer `Se connecter` : afficher explicitement le message « disponible à la phase 2 ».
 6. Tester le menu mobile et la navigation inférieure sur la vitrine.
 7. Ouvrir `/apercu` : vérifier la sidebar desktop, le menu mobile et l'alternance Producteur / Acheteur ; toutes les métriques doivent indiquer « À venir », sans chiffres fictifs.
-8. Couper temporairement **uniquement** l'API (si souhaité) : l'interface doit afficher un état d'indisponibilité, sans faux succès.
+8. **Hamburger desktop :** en haut du tableau de bord, cliquer sur le bouton. Le menu gauche doit se replier en colonne d'icônes, puis se déployer à nouveau au second clic ; le contenu prend automatiquement la largeur libérée.
+9. **Défilement indépendant :** avec la souris sur la sidebar, faire défiler le menu sans déplacer le contenu principal ; avec la souris sur le contenu, défiler la page sans déplacer la sidebar ni le header fixe. Les deux scrollbars sont masquées visuellement sans bloquer le défilement.
+10. **Tablette/mobile :** le hamburger ouvre un tiroir latéral au-dessus du contenu, avec fond assombri ; cliquer en dehors ou fermer le tiroir rétablit le contenu. L'arrière-plan ne doit pas défiler tant que le tiroir est ouvert. Tester le passage de la taille desktop à mobile.
+11. Couper temporairement **uniquement** l'API (si souhaité) : l'interface doit afficher un état d'indisponibilité, sans faux succès.
 
 ## Limitations délibérées
 - Recherche de produits en temps réel et filtres PostgreSQL : **phase 3**. Le champ de recherche actuel filtre les noms de catégories locales et ne prétend pas chercher des offres B2B réelles.
