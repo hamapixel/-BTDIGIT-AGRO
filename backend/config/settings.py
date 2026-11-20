@@ -98,6 +98,8 @@ REST_FRAMEWORK = {
         "auth_resend": "3/hour",
         "auth_recover": "5/hour",
         "auth_recover_confirm": "10/min",
+        "auth_add_contact": "5/hour",
+        "auth_add_contact_confirm": "10/min",
     },
 }
 
