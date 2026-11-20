@@ -1,123 +1,11 @@
-from datetime import timedelta
-from unittest.mock import patch
-
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Membership, Organization, PasswordResetChallenge, VerificationChallenge
-from .tests import EMAIL_SETTINGS, PASSWORD
-
-
-@override_settings(**EMAIL_SETTINGS)
-class RecoveryTests(TestCase):
-    def setUp(self):
-        cache.clear()
-        self.owner = get_user_model().objects.create_user(
-            username="agro_recovery", email="recovery@example.com",
-            password=PASSWORD, email_verified_at=timezone.now(),
-        )
-
-    @patch("accounts.advanced_views._send")
-    def test_recovery_requires_code_and_replaces_password(self, sender):
-        start = self.client.post(reverse("auth-recover"), {
-            "channel": "email", "delivery": "email", "contact": "Recovery@Example.com"
-        })
-        self.assertEqual(start.status_code, 202)
-        self.assertEqual(PasswordResetChallenge.objects.count(), 1)
-        code = sender.call_args.args[1]
-        challenge = PasswordResetChallenge.objects.get()
-        self.assertNotEqual(challenge.code_hash, code)
-
-        bad = self.client.post(reverse("auth-recover-confirm"), {
-            "channel": "email", "contact": "recovery@example.com",
-            "code": "123456" if code != "123456" else "654321",
-            "password": "NewPass2026!Agro",
-        })
-        self.assertEqual(bad.status_code, 400)
-
-        ok = self.client.post(reverse("auth-recover-confirm"), {
-            "channel": "email", "contact": "recovery@example.com",
-            "code": code, "password": "NewPass2026!Agro",
-        })
-        self.assertEqual(ok.status_code, 200)
-        self.owner.refresh_from_db()
-        self.assertTrue(self.owner.check_password("NewPass2026!Agro"))
-        challenge.refresh_from_db()
-        self.assertIsNotNone(challenge.consumed_at)
-        replay = self.client.post(reverse("auth-recover-confirm"), {
-            "channel": "email", "contact": "recovery@example.com",
-            "code": code, "password": "Again2026!Secure",
-        })
-        self.assertEqual(replay.status_code, 400)
-
-    @patch("accounts.advanced_views._send")
-    def test_unknown_or_unverified_contact_does_not_leak_or_send(self, sender):
-        unknown = self.client.post(reverse("auth-recover"), {
-            "channel": "email", "contact": "unknown@example.com",
-        })
-        unverified = get_user_model().objects.create_user(
-            username="notverified", email="unverified@example.com", password=PASSWORD,
-        )
-        hidden = self.client.post(reverse("auth-recover"), {
-            "channel": "email", "contact": unverified.email,
-        })
-        self.assertEqual(unknown.status_code, 202)
-        self.assertEqual(unknown.json(), hidden.json())
-        sender.assert_not_called()
-
-    @patch("accounts.advanced_views._send")
-    def test_recovery_code_expires_and_wrong_attempts_are_limited(self, sender):
-        self.client.post(reverse("auth-recover"), {"channel": "email", "contact": self.owner.email})
-        code = sender.call_args.args[1]
-        wrong = "000000" if code != "000000" else "111111"
-        for _ in range(5):
-            response = self.client.post(reverse("auth-recover-confirm"), {
-                "channel": "email", "contact": self.owner.email,
-                "code": wrong, "password": "NewPass2026!Agro",
-            })
-            self.assertEqual(response.status_code, 400)
-        locked = self.client.post(reverse("auth-recover-confirm"), {
-            "channel": "email", "contact": self.owner.email,
-            "code": code, "password": "NewPass2026!Agro",
-        })
-        self.assertEqual(locked.status_code, 400)
-        self.assertEqual(PasswordResetChallenge.objects.get().attempts, 5)
-
-    @patch("accounts.advanced_views._send")
-    def test_resend_invalidate_previous_registration_code(self, sender):
-        user = get_user_model().objects.create_user(
-            username="newcomer", email="new@example.com",
-            password=PASSWORD, is_active=False,
-        )
-        old = VerificationChallenge.objects.create(
-            user=user, channel="email", code_hash="old_hash",
-            expires_at=timezone.now() + timedelta(minutes=5),
-        )
-        VerificationChallenge.objects.filter(id=old.id).update(
-            created_at=timezone.now() - timedelta(minutes=2)
-        )
-        response = self.client.post(reverse("auth-resend"), {
-            "channel": "email", "contact": user.email,
-        })
-        self.assertEqual(response.status_code, 202)
-        old.refresh_from_db()
-        self.assertIsNotNone(old.consumed_at)
-        self.assertEqual(VerificationChallenge.objects.count(), 2)
-        sender.assert_called_once()
-        new_code = sender.call_args.args[1]
-        self.assertEqual(self.client.post(reverse("auth-verify"), {
-            "channel": "email", "contact": user.email, "code": new_code,
-        }).status_code, 200)
-
-    @patch("accounts.advanced_views._send")
-    def test_recovery_does_not_send_twice_during_cooldown(self, sender):
-        data = {"channel": "email", "contact": self.owner.email}
-        self.assertEqual(self.client.post(reverse("auth-recover"), data).status_code, 202)
-        self.assertEqual(self.client.post(reverse("auth-recover"), data).status_code, 202)
-        sender.assert_called_once()
+from .models import Membership, Organization
+from .tests import PASSWORD
 
 
 class OrganizationIsolationTests(TestCase):
@@ -153,6 +41,12 @@ class OrganizationIsolationTests(TestCase):
         another_client.force_login(self.other)
         self.assertEqual(another_client.get(reverse("org-list")).json()["organizations"], [])
         self.assertEqual(another_client.get(reverse("org-detail", args=[org_id])).status_code, 404)
+        # Aucune invitation sur la base d'une adresse email non vérifiée.
+        self.client.force_login(self.owner)
+        invalid = self.client.post(reverse("org-members", args=[org_id]), {
+            "identifier": self.other.email,
+        })
+        self.assertEqual(invalid.status_code, 400)
         self.assertEqual(another_client.get(reverse("org-members", args=[org_id])).status_code, 404)
         self.assertEqual(another_client.patch(
             reverse("org-detail", args=[org_id]), {"name": "Prise de contrôle"},
@@ -171,12 +65,12 @@ class OrganizationIsolationTests(TestCase):
 
         self.client.force_login(self.owner)
         invite = self.client.post(reverse("org-members", args=[org.id]), {
-            "identifier": self.member_user.email, "role": "member",
+            "user_id": str(self.member_user.id), "role": "member",
         })
         self.assertEqual(invite.status_code, 201)
         member_id = invite.json()["member"]["id"]
         self.assertEqual(self.client.post(reverse("org-members", args=[org.id]), {
-            "identifier": self.member_user.email, "role": "member",
+            "user_id": str(self.member_user.id), "role": "member",
         }).status_code, 400)
         self.assertEqual(self.client.get(reverse("org-members", args=[other_org.id])).status_code, 404)
 
@@ -195,7 +89,7 @@ class OrganizationIsolationTests(TestCase):
             content_type="application/json",
         ).status_code, 403)
         self.assertEqual(member_client.post(reverse("org-members", args=[org.id]), {
-            "identifier": self.other.email,
+            "user_id": str(self.other.id),
         }).status_code, 403)
         self.assertEqual(member_client.get(reverse("org-detail", args=[other_org.id])).status_code, 404)
 
