@@ -25,6 +25,10 @@ services:
       POSTGRES_INTERNAL_PORT: "5432"
       # Vite fait suivre /api à http://api:8000 ; ajouter ce host Docker uniquement en dev.
       DJANGO_ALLOWED_HOSTS: "api,${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}"
+      # Le port PUBLIC Vite n'est pas 5173 mais 15173 (ou AGRO_WEB_PORT).
+      # Le navigateur envoie Origin sur POST, même avec le proxy /api.
+      # Prioritaire sur les anciennes valeurs stockées dans .env.
+      CSRF_TRUSTED_ORIGINS: "http://localhost:${AGRO_WEB_PORT:-15173},http://127.0.0.1:${AGRO_WEB_PORT:-15173},${CSRF_TRUSTED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}"
     volumes:
       - ./backend:/app
     ports:
