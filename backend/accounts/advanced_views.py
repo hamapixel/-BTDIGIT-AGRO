@@ -135,7 +135,10 @@ class PasswordResetConfirmView(APIView):
             user = User.objects.select_for_update().filter(
                 **_lookup(data["channel"], data["contact"])
             ).first()
-            if not user or not user.is_active:
+            if not user or not user.is_active or not (
+                (data["channel"] == "email" and user.email_verified_at)
+                or (data["channel"] == "phone" and user.phone_verified_at)
+            ):
                 return Response({"detail": CODE_ERROR}, status=400)
             latest = PasswordResetChallenge.objects.select_for_update().filter(
                 user=user, channel=data["channel"], consumed_at__isnull=True
