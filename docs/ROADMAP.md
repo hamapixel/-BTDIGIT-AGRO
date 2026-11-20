@@ -25,15 +25,15 @@ Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle
 **Sortie** : API et frontend démarrables, migrations reproductibles, CI verte ; PR #3 fusionnée (`f380d9d`) sur validation explicite de l'utilisateur. Restent à compléter avant le lancement : essais sur appareils réels et mesures de performance.
 
 ## PHASE 2 — Authentification, profils et organisations (ACTIVE, étapes 2.1 à 2.3)
-**Progression 2.1 au 20/11/2026 :** fondations backend et React développées dans la PR #5 (brouillon) ; GitHub Actions : 13 tests Django et 9 tests React réussis, migrations sans écarts. L'inscription fonctionnelle par vrai email/SMS attend la configuration et le test du fournisseur. La validation Windows et les étapes 2.2/2.3 restent ouvertes. Ne pas considérer la phase 2 comme terminée. Guide : docs/PHASE_02_AUTH_WINDOWS.md.
+**État au 20/11/2026 :** développement des étapes 2.1 à 2.3 présent dans la PR #5 (brouillon) : inscription OTP email/WhatsApp/SMS, récupération/renvoi OTP, ajout d'un second contact, organisations multi-rôles, invitations avec acceptation et superadmin. Les tests GitHub ont validé 31 tests backend et 14 tests React, migrations cohérentes. **Bloquant avant fusion : vrai fournisseur Meta WhatsApp ou SMTP à configurer, réception réelle d'un code, dernière CI et tests Windows sur les migrations 0003 à 0005 + navigation responsive.** Aucun fournisseur réel n'a encore été vérifié par réception. Guide : docs/PHASE_02_AUTH_WINDOWS.md.
 
-- [ ] Choix explicite inscription par téléphone OU email.
-- [ ] Téléphone normalisé E.164 (dont +223), email normalisé et un contact principal vérifié.
-- [ ] OTP SMS via prestataire réel ou OTP/lien email via SMTP réel ; mode test isolé.
-- [ ] Mots de passe sûrs, expiration/limites d'OTP, récupération de compte, gestion sessions.
-- [ ] Choix du rôle (producteur, coopérative, acheteur professionnel, transporteur).
-- [ ] Création organisation, membres et permissions côté API ; super admin distinct.
-- [ ] Tester non-divulgation entre organisations, changements de profil et refus d'accès.
+- [x] Inscription téléphone ou email, sélection WhatsApp ou SMS pour le téléphone.
+- [x] Téléphone E.164 (dont +223), email normalisé, contact principal vérifié et second contact vérifiable.
+- [ ] Intégrations réelles Meta WhatsApp AUTHENTICATION, SMS Twilio et SMTP codées, tests isolés ; **réception réelle sur un prestataire actif à vérifier**.
+- [x] Mots de passe hachés, OTP à expiration/tentatives limitées, renvoi, récupération, sessions et CSRF.
+- [x] Rôle métier de l'organisation : producteur, coopérative, acheteur professionnel, transporteur.
+- [x] Création d'organisations UUID, membres owner/admin/member, invitation acceptée explicitement, permissions API et consultation superadmin distincte.
+- [x] Tests automatiques d'isolation multi-organisations, refus d'accès et gestion des membres ; validation de bout en bout Windows à faire.
 **Sortie** : inscription, vérification et connexion réelles avec tests ; canaux non configurés signalés indisponibles.
 
 ## PHASE 3 — Catalogue, annonces et recherche intelligente (PRIORITÉ PRODUIT)
