@@ -8,7 +8,7 @@ import {
 
 type Channel = "email" | "phone";
 type Step = "register" | "login" | "verify" | "complete";
-type Channels = { email: boolean; phone: boolean };
+type Channels = { email: boolean; phone: boolean; whatsapp?: boolean; sms?: boolean };
 type APIError = { detail?: string; [key: string]: unknown };
 
 function cookie(name: string) {
@@ -41,6 +41,7 @@ export default function AuthPage() {
   const [channels, setChannels] = useState<Channels>({ email: false, phone: false });
   const [loadingChannels, setLoadingChannels] = useState(true);
   const [channel, setChannel] = useState<Channel>("phone");
+  const [phoneDelivery, setPhoneDelivery] = useState<"whatsapp" | "sms">("whatsapp");
   const [contact, setContact] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
@@ -59,7 +60,8 @@ export default function AuthPage() {
         return response.json() as Promise<Channels>;
       })
       .then((data) => {
-        setChannels({ email: !!data.email, phone: !!data.phone });
+        setChannels({ email: !!data.email, phone: !!data.phone, whatsapp: !!data.whatsapp, sms: !!data.sms });
+        if (!data.whatsapp && data.sms) setPhoneDelivery("sms");
         if (!data.phone && data.email) setChannel("email");
       })
       .catch((err: unknown) => {
@@ -83,6 +85,7 @@ export default function AuthPage() {
         if (!channels[channel]) throw new Error(providerUnavailable);
         await postAPI("/api/v1/auth/register/", {
           channel, contact, full_name: fullName, password,
+          delivery: channel === "email" ? "email" : phoneDelivery,
         });
         setPassword("");
         goto("verify");
@@ -113,8 +116,9 @@ export default function AuthPage() {
   const isRegister = step === "register";
   const isVerify = step === "verify";
   const loginOnly = step === "login";
-  const channelReady = channels[channel];
-  const channelLabel = channel === "phone" ? "SMS" : "email";
+  const channelReady = channel === "email"
+    ? channels.email : phoneDelivery === "whatsapp" ? !!channels.whatsapp : !!channels.sms;
+  const channelLabel = channel === "email" ? "email" : phoneDelivery === "whatsapp" ? "WhatsApp" : "SMS";
   const providerUnavailable = `Inscription impossible pour le moment : l'envoi d'OTP par ${channelLabel} n'est pas configuré. Aucun compte n'a été créé et aucun code n'a été envoyé.`;
   const showUnavailableMessage = () => {
     setMessage("");
@@ -168,10 +172,24 @@ export default function AuthPage() {
                     <button className={channel === "phone" ? "selected" : ""} aria-pressed={channel === "phone"} type="button" onClick={() => { setChannel("phone"); setContact(""); setError(""); }}><Phone size={18}/> Téléphone</button>
                     <button className={channel === "email" ? "selected" : ""} aria-pressed={channel === "email"} type="button" onClick={() => { setChannel("email"); setContact(""); setError(""); }}><Mail size={18}/> Email</button>
                   </div>
+                  {channel === "phone" && (
+                    <div className="auth-delivery-options" role="group" aria-label="Choisir où recevoir le code">
+                      <button type="button" aria-pressed={phoneDelivery === "whatsapp"}
+                        className={phoneDelivery === "whatsapp" ? "selected" : ""}
+                        onClick={() => { setPhoneDelivery("whatsapp"); setError(""); }}>
+                        WhatsApp {channels.whatsapp ? "✓" : ""}
+                      </button>
+                      <button type="button" aria-pressed={phoneDelivery === "sms"}
+                        className={phoneDelivery === "sms" ? "selected" : ""}
+                        onClick={() => { setPhoneDelivery("sms"); setError(""); }}>
+                        SMS {channels.sms ? "✓" : ""}
+                      </button>
+                    </div>
+                  )}
                   {!loadingChannels && !channelReady && (
                     <div className="auth-warning" id="auth-service-warning" role="status">
-                      {channel === "phone" ? "L'envoi de SMS" : "L'envoi d'emails"} n'est pas encore configuré.
-                      <span> Le compte ne peut pas être créé avant l'activation d'un canal réel.</span>
+                      L'envoi d'OTP par {channelLabel} n'est pas encore configuré.
+                      <span> Activez un prestataire réel pour créer votre compte.</span>
                     </div>
                   )}
                 </>
