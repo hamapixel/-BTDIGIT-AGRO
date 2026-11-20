@@ -150,7 +150,7 @@ export default function AuthPage() {
                 <span className="auth-card-icon"><Sprout size={22}/></span>
                 <div>
                   <span className="auth-stage">ESPACE PROFESSIONNEL · BTDIGIT AGRO</span>
-                  <h2>{isRegister ? "Créer mon compte" : "Bon retour parmi nous !"}</h2>
+                  <h2>{isRegister ? "Créer mon compte" : "Bon retour !"}</h2>
                 </div>
               </div>
               <p className="auth-description">
