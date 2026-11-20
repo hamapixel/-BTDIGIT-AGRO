@@ -23,11 +23,12 @@ La branche étant déjà présente, ne pas répéter `git switch --track` (cela 
 ~~~powershell
 docker compose config --quiet
 docker compose build web
+docker compose up -d --force-recreate api
 docker compose up -d web
 docker compose ps
 ~~~
 
-Ouvrir **http://127.0.0.1:15173/** pour le site vitrine, puis **http://127.0.0.1:15173/apercu** pour la prévisualisation de l'espace professionnel (sidebar fixe sur ordinateur, navigation inférieure mobile). Le backend doit toujours être accessible sur **http://127.0.0.1:18080/api/v1/health/**. Le frontend appelle `/api/v1/health/` via le proxy Vite vers le service Docker `api:8000`. Les ports 8000 de SUGU KURA, 8020/8021 de StockPro et 55432 de PostgreSQL ne sont pas modifiés.
+Ouvrir **http://127.0.0.1:15173/** pour le site vitrine, puis **http://127.0.0.1:15173/apercu** pour la prévisualisation de l'espace professionnel (sidebar fixe sur ordinateur, navigation inférieure mobile). Le backend doit toujours être accessible sur **http://127.0.0.1:18080/api/v1/health/**. Le frontend appelle `/api/v1/health/` via le proxy Vite vers le service Docker `api:8000`. La configuration Docker ajoute le nom `api` aux hôtes Django autorisés **en développement uniquement**. Les ports 8000 de SUGU KURA, 8020/8021 de StockPro et 55432 de PostgreSQL ne sont pas modifiés.
 
 Si le port 15173 est occupé, définir `AGRO_WEB_PORT=15174` dans le `.env` non suivi par Git et recréer **seulement** le service web avec `docker compose up -d --no-deps --force-recreate web`. Adapter l'URL en conséquence.
 
@@ -36,6 +37,7 @@ Si le port 15173 est occupé, définir `AGRO_WEB_PORT=15174` dans le `.env` non 
 ~~~powershell
 docker compose exec web npm run build
 docker compose exec web npm test
+curl.exe http://127.0.0.1:15173/api/v1/health/
 docker compose logs --tail=60 web
 ~~~
 
