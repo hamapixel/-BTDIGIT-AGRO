@@ -24,17 +24,28 @@ Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle
 - [x] Validation utilisateur des interactions UI PC et accord explicite pour fusionner la phase 1 ; **réserve** : mesures de performance et tests sur de vrais téléphones/tablettes non démontrés, à suivre avant tout lancement public.
 **Sortie** : API et frontend démarrables, migrations reproductibles, CI verte ; PR #3 fusionnée (`f380d9d`) sur validation explicite de l'utilisateur. Restent à compléter avant le lancement : essais sur appareils réels et mesures de performance.
 
-## PHASE 2 — Authentification, profils et organisations (ACTIVE, étapes 2.1 à 2.3)
-**État au 20/11/2026 :** développement des étapes 2.1 à 2.3 présent dans la PR #5 (brouillon) : inscription OTP email/WhatsApp/SMS, récupération/renvoi OTP, ajout d'un second contact, organisations multi-rôles, invitations avec acceptation et superadmin. Les tests GitHub ont validé 31 tests backend et 14 tests React, migrations cohérentes. **Bloquant avant fusion : vrai fournisseur Meta WhatsApp ou SMTP à configurer, réception réelle d'un code, dernière CI et tests Windows sur les migrations 0003 à 0005 + navigation responsive.** Aucun fournisseur réel n'a encore été vérifié par réception. Guide : docs/PHASE_02_AUTH_WINDOWS.md.
+## PHASE 2 — Authentification, profils et organisations (EN VALIDATION)
 
-- [x] Inscription téléphone ou email, sélection WhatsApp ou SMS pour le téléphone.
-- [x] Téléphone E.164 (dont +223), email normalisé, contact principal vérifié et second contact vérifiable.
-- [ ] Intégrations réelles Meta WhatsApp AUTHENTICATION, SMS Twilio et SMTP codées, tests isolés ; **réception réelle sur un prestataire actif à vérifier**.
-- [x] Mots de passe hachés, OTP à expiration/tentatives limitées, renvoi, récupération, sessions et CSRF.
-- [x] Rôle métier de l'organisation : producteur, coopérative, acheteur professionnel, transporteur.
-- [x] Création d'organisations UUID, membres owner/admin/member, invitation acceptée explicitement, permissions API et consultation superadmin distincte.
-- [x] Tests automatiques d'isolation multi-organisations, refus d'accès et gestion des membres ; validation de bout en bout Windows à faire.
-**Sortie** : inscription, vérification et connexion réelles avec tests ; canaux non configurés signalés indisponibles.
+**Changement de décision utilisateur, 20/11/2026 :** inscription et connexion
+**sans code OTP**. Les canaux WhatsApp, SMS et email ne sont plus nécessaires
+pour créer un compte. PR #5 en brouillon et `main` inchangée.
+
+- [x] Inscription immédiate par numéro E.164 (+223 Mali inclus) ou email normalisé, nom et mot de passe fort.
+- [x] Session ouverte dès la création du compte, reconnexion par contact et mot de passe, déconnexion et CSRF.
+- [x] Aucun champ OTP ni envoi de code dans le parcours actif, aucune API OTP routée.
+- [x] Contact déclaré **non vérifié** : ne jamais présenter l'email ou le téléphone comme certifié.
+- [x] Changement du mot de passe et ajout d'un contact depuis la session avec saisie du mot de passe actuel.
+- [x] Organisations métier (producteur, coopérative, acheteur, transporteur), droits owner/admin/member et superadmin.
+- [x] Invitations par identifiant UUID volontairement partagé, acceptation obligatoire avant accès.
+- [ ] Vérifier CI GitHub Actions backend/frontend sur cette nouvelle stratégie sans OTP.
+- [ ] Valider migrations et tests Windows, formulaire mobile/tablette/PC, connexion et déconnexion de bout en bout.
+- [ ] Avant une production ouverte : protection renforcée des inscriptions abusives, récupération sécurisée de mot de passe, audit et cache partagé.
+
+**Réserve importante :** sans preuve de possession des coordonnées, le système
+est plus simple mais exposé à la réservation abusive de numéros/emails.
+La récupération publique par email/numéro seul est volontairement désactivée.
+Les tables historiques OTP restent en place pour préserver la base mais sont
+inutilisées. **Ne pas fusionner la PR #5 avant les contrôles locaux et accord humain.**
 
 ## PHASE 3 — Catalogue, annonces et recherche intelligente (PRIORITÉ PRODUIT)
 - [ ] Catégories, régions/cercles/communes administrables, annonces, récoltes, photos et unités.
