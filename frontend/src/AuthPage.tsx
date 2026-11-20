@@ -116,7 +116,7 @@ export default function AuthPage() {
   const channelReady = channels[channel];
 
   return (
-    <div className="auth-shell">
+    <div className={`auth-shell auth-shell--${step}`}>
       <div className="auth-left">
         <a className="auth-brand" href="/"><span><Sprout size={24}/></span><strong>BTDIGIT <em>AGRO</em></strong></a>
         <div className="auth-left-content">
@@ -168,7 +168,6 @@ export default function AuthPage() {
                 {isRegister && (
                   <label>Nom complet<input value={fullName} onChange={(e) => setFullName(e.target.value)} type="text" placeholder="Ex. : Aminata Coulibaly" autoComplete="name" required minLength={2} maxLength={150}/></label>
                 )}
-                {!isVerify && !isRegister && <span className="auth-field-hint">Vous pouvez utiliser le contact vérifié lors de votre inscription.</span>}
 
                 <label>{isRegister || isVerify ? (channel === "phone" ? "Numéro de téléphone" : "Adresse email") : "Téléphone ou email"}
                   <span className="auth-field-wrap">{channel === "phone" && (isRegister || isVerify) ? <Phone size={18}/> : <Mail size={18}/>}<input value={contact} onChange={(e) => setContact(e.target.value)} type={channel === "email" && !loginOnly ? "email" : "text"} placeholder={channel === "phone" && !loginOnly ? "+223 76 00 00 00" : "nom@exemple.com"} required autoComplete={loginOnly ? "username" : "off"} readOnly={isVerify}/></span>
