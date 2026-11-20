@@ -174,6 +174,15 @@ describe("BTDIGIT AGRO — connexion directe sans OTP", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("CSRF");
   });
 
+  it("garde un titre de connexion court et lisible sur mobile", () => {
+    window.history.replaceState({}, "", "/connexion");
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Bon retour !" })).toBeInTheDocument();
+    expect(document.querySelector(".auth-shell")).toHaveClass("auth-shell--login");
+    expect(screen.queryByText("Bon retour parmi nous !")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Me connecter" })).toBeEnabled();
+  });
+
   it("connexion par identifiant et mot de passe sans étape supplémentaire", async () => {
     window.history.replaceState({}, "", "/connexion");
     const fetchMock = vi.fn((url: string) => Promise.resolve({
