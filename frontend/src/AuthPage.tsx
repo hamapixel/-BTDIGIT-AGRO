@@ -1,4 +1,6 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import "./auth.css";
 import {
   ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, Leaf, LockKeyhole,
   Mail, Phone, ShieldCheck, Sprout, Wheat,
