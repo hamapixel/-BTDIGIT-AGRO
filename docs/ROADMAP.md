@@ -24,7 +24,7 @@ Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle
 - [x] Validation utilisateur des interactions UI PC et accord explicite pour fusionner la phase 1 ; **réserve** : mesures de performance et tests sur de vrais téléphones/tablettes non démontrés, à suivre avant tout lancement public.
 **Sortie** : API et frontend démarrables, migrations reproductibles, CI verte ; PR #3 fusionnée (`f380d9d`) sur validation explicite de l'utilisateur. Restent à compléter avant le lancement : essais sur appareils réels et mesures de performance.
 
-## PHASE 2 — Authentification, profils et organisations
+## PHASE 2 — Authentification, profils et organisations (ACTIVE, étapes 2.1 à 2.3)
 - [ ] Choix explicite inscription par téléphone OU email.
 - [ ] Téléphone normalisé E.164 (dont +223), email normalisé et un contact principal vérifié.
 - [ ] OTP SMS via prestataire réel ou OTP/lien email via SMTP réel ; mode test isolé.
