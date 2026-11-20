@@ -101,9 +101,48 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     expect(document.querySelector(".auth-shell")).toHaveClass("auth-shell--register");
     expect(screen.getByRole("group", { name: "Choisir une méthode d'inscription" })).toBeInTheDocument();
     expect(await screen.findByText(/L'envoi de SMS.*n'est pas encore configuré/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Créer mon compte" })).toBeDisabled();
+    const submit = screen.getByRole("button", { name: "Créer mon compte" });
+    expect(submit).toBeEnabled();
+    expect(submit).toHaveAttribute("type", "button");
+    fireEvent.click(submit);
+    expect(screen.getByRole("alert")).toHaveTextContent("Aucun compte n'a été créé");
+    expect(screen.getByRole("alert")).toHaveTextContent("aucun code n'a été envoyé");
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1); // consultation des canaux, aucun POST
     fireEvent.click(screen.getByRole("button", { name: /Email/i }));
     expect(await screen.findByText(/L'envoi d'emails.*n'est pas encore configuré/)).toBeInTheDocument();
+    fireEvent.click(submit);
+    expect(screen.getByRole("alert")).toHaveTextContent("OTP par email");
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+  });
+
+  it("inscrit uniquement lorsque le canal est réellement configuré côté API", async () => {
+    window.history.replaceState({}, "", "/inscription");
+    const requests = vi.fn((path: string) => Promise.resolve({
+      ok: true,
+      json: async () => path.includes("/auth/channels/")
+        ? { email: true, phone: false }
+        : { detail: "Si ce contact peut être inscrit, un code lui sera envoyé." },
+    }));
+    vi.stubGlobal("fetch", requests);
+    render(<App />);
+    expect(await screen.findByText("Adresse email")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("Ex. : Aminata Coulibaly"), {
+      target: { value: "Aminata Exemple" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("nom@exemple.com"), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("10 caractères minimum"), {
+      target: { value: "MotDePasse2026!Valid" },
+    });
+    const submit = screen.getByRole("button", { name: "Créer mon compte" });
+    expect(submit).toBeEnabled();
+    expect(submit).toHaveAttribute("type", "submit");
+    fireEvent.click(submit);
+    expect(await screen.findByRole("heading", { name: "Vérifier mon contact" })).toBeInTheDocument();
+    expect(requests).toHaveBeenCalledWith("/api/v1/auth/register/", expect.objectContaining({
+      method: "POST",
+    }));
   });
 
   it("affiche le formulaire de connexion même si les fournisseurs OTP sont indisponibles", async () => {
