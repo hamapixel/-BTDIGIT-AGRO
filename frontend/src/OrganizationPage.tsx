@@ -296,7 +296,11 @@ export default function OrganizationPage() {
                   </select>
                 </label>
                 <label>{newContactChannel === "email" ? "Nouvelle adresse email" : "Nouveau numéro de téléphone"}
-                  <input required type={newContactChannel === "email" ? "email" : "tel"}
+                  <input key={newContactChannel} required
+                    name={newContactChannel === "email" ? "additional_contact_email" : "additional_contact_phone"}
+                    type={newContactChannel === "email" ? "email" : "tel"}
+                    inputMode={newContactChannel === "email" ? "email" : "tel"}
+                    autoComplete="off"
                     value={newContact} onChange={e => setNewContact(e.target.value)}
                     placeholder={newContactChannel === "email" ? "adresse@exemple.com" : "+223 76 00 00 00"}/>
                 </label>
