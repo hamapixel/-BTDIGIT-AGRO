@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from .delivery import DeliveryError, channel_available, deliver_code
+from .delivery import DeliveryError, channel_available, deliver_code, delivery_options
 from .models import User, VerificationChallenge
 from .serializers import LoginSerializer, RegisterSerializer, VerifySerializer
 
@@ -32,7 +32,7 @@ class ChannelsView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        return Response({"email": channel_available("email"), "phone": channel_available("phone")})
+        return Response(delivery_options())
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
@@ -57,7 +57,7 @@ class RegisterView(APIView):
         data = serializer.validated_data
         channel = data["channel"]
         contact = data["contact"]
-        if not channel_available(channel):
+        if not channel_available(data.get("delivery") or channel):
             return Response(
                 {"detail": "Ce moyen de vérification n'est pas encore configuré."},
                 status=503,
@@ -99,7 +99,7 @@ class RegisterView(APIView):
                     expires_at=now + timedelta(minutes=5),
                 )
                 # En cas d'échec du prestataire, la transaction est annulée.
-                deliver_code(channel, contact, code)
+                deliver_code(channel, contact, code, via=data.get("delivery"))
         except DeliveryError:
             return Response(
                 {"detail": "L'envoi du code est momentanément indisponible."},
