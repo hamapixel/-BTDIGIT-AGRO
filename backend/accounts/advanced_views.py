@@ -1,161 +1,16 @@
-"""Étapes 2.2 et 2.3 : récupération sécurisée et isolation des organisations."""
-import secrets
-from datetime import timedelta
-
-from django.contrib.auth.hashers import check_password, make_password
+"""Organisations isolées par membre, invitations explicites et superadministration."""
 from django.db import IntegrityError, transaction
 from django.db.models import Count
 from django.http import Http404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from .delivery import DeliveryError, channel_available, deliver_code
-from .models import Membership, Organization, PasswordResetChallenge, User, VerificationChallenge
-from .serializers import (
-    AddMemberSerializer, ContactDeliverySerializer, OrganizationSerializer,
-    PasswordResetConfirmSerializer,
-)
-
-GENERIC_MESSAGE = "Si ce contact est éligible, un code de vérification sera envoyé."
-CODE_ERROR = "Code invalide, expiré ou trop de tentatives."
-
-
-def _lookup(channel, contact):
-    return {"email": contact} if channel == "email" else {"phone_e164": contact}
-
-
-def _delivery_allowed(data):
-    return channel_available(data.get("delivery") or data["channel"])
-
-
-def _send(data, code):
-    deliver_code(data["channel"], data["contact"], code, via=data.get("delivery"))
-
-
-@method_decorator(csrf_protect, name="dispatch")
-class ResendVerificationView(APIView):
-    authentication_classes = []
-    permission_classes = [AllowAny]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth_resend"
-
-    def post(self, request):
-        serializer = ContactDeliverySerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        if not _delivery_allowed(data):
-            return Response({"detail": "Méthode d'envoi indisponible."}, status=503)
-        try:
-            with transaction.atomic():
-                user = User.objects.select_for_update().filter(**_lookup(data["channel"], data["contact"])).first()
-                if user is None or user.is_active:
-                    return Response({"detail": GENERIC_MESSAGE}, status=202)
-                latest = VerificationChallenge.objects.filter(
-                    user=user, channel=data["channel"]
-                ).order_by("-created_at").first()
-                now = timezone.now()
-                if latest and latest.created_at > now - timedelta(seconds=60):
-                    return Response({"detail": GENERIC_MESSAGE}, status=202)
-                code = f"{secrets.randbelow(1_000_000):06d}"
-                VerificationChallenge.objects.filter(
-                    user=user, channel=data["channel"], consumed_at__isnull=True
-                ).update(consumed_at=now)
-                VerificationChallenge.objects.create(
-                    user=user, channel=data["channel"],
-                    code_hash=make_password(code),
-                    expires_at=now + timedelta(minutes=5),
-                )
-                _send(data, code)
-        except DeliveryError:
-            return Response({"detail": "Le service de vérification est indisponible."}, status=503)
-        return Response({"detail": GENERIC_MESSAGE}, status=202)
-
-
-@method_decorator(csrf_protect, name="dispatch")
-class PasswordResetRequestView(APIView):
-    authentication_classes = []
-    permission_classes = [AllowAny]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth_recover"
-
-    def post(self, request):
-        serializer = ContactDeliverySerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        if not _delivery_allowed(data):
-            return Response({"detail": "Méthode d'envoi indisponible."}, status=503)
-        try:
-            with transaction.atomic():
-                user = User.objects.select_for_update().filter(
-                    **_lookup(data["channel"], data["contact"])
-                ).first()
-                valid = bool(user and user.is_active and (
-                    (data["channel"] == "email" and user.email_verified_at)
-                    or (data["channel"] == "phone" and user.phone_verified_at)
-                ))
-                if not valid:
-                    return Response({"detail": GENERIC_MESSAGE}, status=202)
-                now = timezone.now()
-                recent = PasswordResetChallenge.objects.filter(
-                    user=user, channel=data["channel"]
-                ).order_by("-created_at").first()
-                if recent and recent.created_at > now - timedelta(seconds=60):
-                    return Response({"detail": GENERIC_MESSAGE}, status=202)
-                code = f"{secrets.randbelow(1_000_000):06d}"
-                PasswordResetChallenge.objects.filter(
-                    user=user, channel=data["channel"], consumed_at__isnull=True,
-                ).update(consumed_at=now)
-                PasswordResetChallenge.objects.create(
-                    user=user, channel=data["channel"],
-                    code_hash=make_password(code), expires_at=now + timedelta(minutes=5),
-                )
-                _send(data, code)
-        except DeliveryError:
-            return Response({"detail": "Le service de récupération est indisponible."}, status=503)
-        return Response({"detail": GENERIC_MESSAGE}, status=202)
-
-
-@method_decorator(csrf_protect, name="dispatch")
-class PasswordResetConfirmView(APIView):
-    authentication_classes = []
-    permission_classes = [AllowAny]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth_recover_confirm"
-
-    def post(self, request):
-        serializer = PasswordResetConfirmSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        with transaction.atomic():
-            user = User.objects.select_for_update().filter(
-                **_lookup(data["channel"], data["contact"])
-            ).first()
-            if not user or not user.is_active or not (
-                (data["channel"] == "email" and user.email_verified_at)
-                or (data["channel"] == "phone" and user.phone_verified_at)
-            ):
-                return Response({"detail": CODE_ERROR}, status=400)
-            latest = PasswordResetChallenge.objects.select_for_update().filter(
-                user=user, channel=data["channel"], consumed_at__isnull=True
-            ).order_by("-created_at").first()
-            now = timezone.now()
-            if not latest or latest.expires_at <= now or latest.attempts >= 5:
-                return Response({"detail": CODE_ERROR}, status=400)
-            if not check_password(data["code"], latest.code_hash):
-                latest.attempts += 1
-                latest.save(update_fields=["attempts"])
-                return Response({"detail": CODE_ERROR}, status=400)
-            user.set_password(data["password"])
-            user.save(update_fields=["password"])
-            PasswordResetChallenge.objects.filter(
-                user=user, consumed_at__isnull=True
-            ).update(consumed_at=now)
-        return Response({"status": "password_changed"})
+from .models import Membership, Organization, User
+from .serializers import AddMemberSerializer, OrganizationSerializer
 
 
 def _org_payload(org, member):
@@ -245,12 +100,11 @@ class OrganizationMembersView(APIView):
         serializer.is_valid(raise_exception=True)
         if current.role == "admin" and serializer.validated_data["role"] != "member":
             return Response({"detail": "Seul le propriétaire peut nommer un administrateur."}, status=403)
-        identifier = serializer.validated_data["identifier"]
-        user = User.objects.filter(
-            **({"email": identifier} if "@" in identifier else {"phone_e164": identifier})
-        ).first()
-        if user is None or not user.is_active or not (user.email_verified_at or user.phone_verified_at):
-            return Response({"detail": "Ce compte vérifié n'est pas disponible."}, status=400)
+        # Un email ou numéro sans vérification OTP ne prouve pas son propriétaire.
+        # Les invitations utilisent l'UUID partagé volontairement par le destinataire.
+        user = User.objects.filter(pk=serializer.validated_data["user_id"], is_active=True).first()
+        if user is None:
+            return Response({"detail": "Compte destinataire introuvable."}, status=400)
         if Membership.objects.filter(user=user, organization_id=pk).exists():
             return Response({"detail": "Ce compte est déjà membre."}, status=400)
         try:
