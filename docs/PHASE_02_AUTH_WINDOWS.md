@@ -23,7 +23,7 @@ git pull --ff-only origin feature/phase-02-authentication
 docker compose config --quiet
 docker compose up -d --no-deps --force-recreate api web
 docker compose exec api python manage.py check
-docker compose exec api python -c "from django.conf import settings; print('Origines CSRF :', settings.CSRF_TRUSTED_ORIGINS); print('Mode debug local :', settings.DEBUG)"
+docker compose exec api python manage.py shell -c "from django.conf import settings; print('Origines CSRF :', settings.CSRF_TRUSTED_ORIGINS); print('Mode debug local :', settings.DEBUG)"
 docker compose exec api python manage.py test
 docker compose exec web npm test
 ~~~
