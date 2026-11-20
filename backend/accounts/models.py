@@ -39,3 +39,49 @@ class VerificationChallenge(models.Model):
         indexes = [
             models.Index(fields=["user", "channel", "-created_at"], name="agro_challenge_recent_idx"),
         ]
+
+
+class PasswordResetChallenge(models.Model):
+    """Un OTP de récupération n'active jamais un compte non vérifié."""
+    CHANNELS = [("email", "Email"), ("phone", "Téléphone")]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reset_challenges")
+    channel = models.CharField(max_length=8, choices=CHANNELS)
+    code_hash = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    consumed_at = models.DateTimeField(null=True, blank=True)
+
+
+class Organization(models.Model):
+    """Identité légale métier, différente de l'identité du propriétaire."""
+    KINDS = [
+        ("producer", "Producteur"),
+        ("cooperative", "Coopérative"),
+        ("buyer", "Acheteur professionnel"),
+        ("carrier", "Transporteur"),
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=180)
+    kind = models.CharField(max_length=16, choices=KINDS)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="created_organizations")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Membership(models.Model):
+    """Chaque compte peut appartenir à plusieurs organisations indépendantes."""
+    ROLES = [("owner", "Propriétaire"), ("admin", "Administrateur"), ("member", "Collaborateur")]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
+    role = models.CharField(max_length=8, choices=ROLES, default="member")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["organization", "user"], name="agro_unique_org_membership"),
+        ]
