@@ -95,6 +95,9 @@ REST_FRAMEWORK = {
         "auth_register": "5/hour",
         "auth_verify": "10/min",
         "auth_login": "10/min",
+        "auth_resend": "3/hour",
+        "auth_recover": "5/hour",
+        "auth_recover_confirm": "10/min",
     },
 }
 
