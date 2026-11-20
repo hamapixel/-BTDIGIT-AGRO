@@ -100,7 +100,7 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     expect(screen.getByRole("heading", { name: "Créer mon compte" })).toBeInTheDocument();
     expect(document.querySelector(".auth-shell")).toHaveClass("auth-shell--register");
     expect(screen.getByRole("group", { name: "Choisir une méthode d'inscription" })).toBeInTheDocument();
-    expect(await screen.findByText(/L'envoi de SMS.*n'est pas encore configuré/)).toBeInTheDocument();
+    expect(await screen.findByText(/L'envoi d'OTP par WhatsApp.*n'est pas encore configuré/)).toBeInTheDocument();
     const submit = screen.getByRole("button", { name: "Créer mon compte" });
     expect(submit).toBeEnabled();
     expect(submit).toHaveAttribute("type", "button");
@@ -108,8 +108,12 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Aucun compte n'a été créé");
     expect(screen.getByRole("alert")).toHaveTextContent("aucun code n'a été envoyé");
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1); // consultation des canaux, aucun POST
+    fireEvent.click(screen.getByRole("button", { name: /^SMS/ }));
+    expect(screen.getByRole("alert")).not.toBeInTheDocument();
+    fireEvent.click(submit);
+    expect(screen.getByRole("alert")).toHaveTextContent("OTP par SMS");
     fireEvent.click(screen.getByRole("button", { name: /Email/i }));
-    expect(await screen.findByText(/L'envoi d'emails.*n'est pas encore configuré/)).toBeInTheDocument();
+    expect(await screen.findByText(/L'envoi d'OTP par email.*n'est pas encore configuré/)).toBeInTheDocument();
     fireEvent.click(submit);
     expect(screen.getByRole("alert")).toHaveTextContent("OTP par email");
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
