@@ -258,3 +258,30 @@
   .auth-heading h2 { font-size: 20px; }
   .auth-choice button { font-size: 12px; }
 }
+
+/* Deux canaux distincts sur un même numéro malien. */
+.auth-delivery-options {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: -1px 0 9px;
+}
+.auth-delivery-options button {
+  flex: 1;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+  min-height: 35px;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 780;
+}
+.auth-delivery-options button.selected {
+  border-color: #87b894;
+  background: #eaf5e9;
+  color: #1c6741;
+}
+@media (max-width: 550px) {
+  .auth-delivery-options button { min-height: 38px; }
+}
