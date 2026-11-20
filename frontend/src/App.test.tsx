@@ -109,7 +109,7 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("aucun code n'a été envoyé");
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1); // consultation des canaux, aucun POST
     fireEvent.click(screen.getByRole("button", { name: /^SMS/ }));
-    expect(screen.getByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     fireEvent.click(submit);
     expect(screen.getByRole("alert")).toHaveTextContent("OTP par SMS");
     fireEvent.click(screen.getByRole("button", { name: /Email/i }));
