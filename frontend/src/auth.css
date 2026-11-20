@@ -311,3 +311,43 @@
   .auth-verify-actions { flex-direction: column; align-items: flex-start; gap: 3px; }
   .auth-shell--recover .auth-card { padding: 18px 16px; }
 }
+
+/* Phase 2 — titre de connexion lisible sur smartphone sans ponctuation
+   orpheline. La carte reste centrée et le scroll vertical reste disponible. */
+.auth-shell--login .auth-heading {
+  min-width: 0;
+  align-items: center;
+}
+.auth-shell--login .auth-heading > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.auth-shell--login .auth-heading h2 {
+  font-size: clamp(20px, 2.1vw, 26px);
+  line-height: 1.18;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+  overflow-wrap: normal;
+}
+@media (max-width: 550px) {
+  .auth-shell--login .auth-card {
+    width: 100%;
+    max-width: 425px;
+  }
+  .auth-shell--login .auth-heading {
+    gap: 10px;
+  }
+  .auth-shell--login .auth-heading h2 {
+    font-size: clamp(20px, 5vw, 24px);
+  }
+}
+@media (max-width: 350px) {
+  .auth-shell--login .auth-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .auth-shell--login .auth-heading h2 {
+    font-size: 23px;
+  }
+}
