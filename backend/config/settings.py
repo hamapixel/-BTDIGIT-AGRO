@@ -89,7 +89,32 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+    # Limites de démarrage, par IP : le cache partagé (Redis) sera requis avant
+    # un déploiement multi-instance. Contrôle supplémentaire par contact en BD.
+    "DEFAULT_THROTTLE_RATES": {
+        "auth_register": "5/hour",
+        "auth_verify": "10/min",
+        "auth_login": "10/min",
+    },
 }
+
+# Désactivé par défaut tant que l'envoi réel n'est pas configuré.
+AGRO_EMAIL_VERIFICATION_ENABLED = _env_bool("AGRO_EMAIL_VERIFICATION_ENABLED", False)
+AGRO_SMS_VERIFICATION_ENABLED = _env_bool("AGRO_SMS_VERIFICATION_ENABLED", False)
+AGRO_SMS_PROVIDER = os.getenv("AGRO_SMS_PROVIDER", "").strip().lower()
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", False)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "")
+EMAIL_TIMEOUT = 10
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
+TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
+
 
 # Autorisations limitées au serveur frontend de développement.
 CORS_ALLOWED_ORIGINS = _env_list("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
