@@ -2,6 +2,7 @@
 # Vérifier avec: python manage.py makemigrations --check --dry-run
 import uuid
 
+from django.contrib.auth.models import UserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import migrations, models
 import django.utils.timezone
@@ -84,5 +85,6 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={"verbose_name": "user", "verbose_name_plural": "users", "abstract": False},
+            managers=[("objects", UserManager())],
         ),
     ]
