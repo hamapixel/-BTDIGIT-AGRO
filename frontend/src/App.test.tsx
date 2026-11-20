@@ -76,7 +76,7 @@ describe("BTDIGIT AGRO — connexion directe sans OTP", () => {
 
   it("crée le compte directement et ouvre la session sans code", async () => {
     window.history.replaceState({}, "", "/inscription");
-    const fetchMock = vi.fn((url: string) => Promise.resolve({
+    const fetchMock = vi.fn((url: string, _options?: RequestInit) => Promise.resolve({
       ok: true, status: url.includes("/auth/register/") ? 201 : 200,
       json: async () => url.includes("/auth/register/")
         ? { status: "authenticated", user: { full_name: "Aminata Test" } }
