@@ -69,14 +69,14 @@ docker compose up -d --force-recreate db
 docker compose ps
 ~~~
 
-Tester la connexion **TCP avec mot de passe** depuis le conteneur :
+Tester l'authentification depuis une connexion réseau Docker (et non via `127.0.0.1` dans le conteneur, qui peut utiliser `trust`) :
 
 ~~~powershell
-docker compose exec db psql -h 127.0.0.1 -U btdigit_agro -d btdigit_agro -tAc "SELECT 1;"
+docker compose exec db psql -h db -W -U btdigit_agro -d btdigit_agro -tAc "SELECT 1;"
 $LASTEXITCODE
 ~~~
 
-La sortie attendue est `1` puis `0`, après saisie du mot de passe si demandé. Sous PowerShell, les combinaisons `sh -c` et guillemets imbriqués peuvent produire un résultat ambigu ; privilégier l'appel direct ci-dessus. Ne pas confondre une connexion locale `psql` sans `-h` (potentiellement sans authentification par mot de passe) avec ce test TCP. Ne jamais publier le mot de passe, `.env`, ni `docker compose config` complet.
+`-h db` désigne le service Docker PostgreSQL via son adresse réseau ; le paramètre `-W` force la demande interactive du mot de passe sans l'écrire en clair dans la ligne de commande. Pour la configuration standard de l'image PostgreSQL 17, l'accès réseau exige le mot de passe. Saisir celui du fichier `.env` uniquement quand demandé. Résultats attendus : `1` puis `0`. Si un mot de passe n'est pas vérifié, examiner `pg_hba.conf`. La réussite d'une connexion à `localhost` depuis le même conteneur ne prouve **pas** que le mot de passe a été remplacé : l'image officielle peut activer `trust` en local. Ne jamais publier le secret, `.env`, ni `docker compose config` complet.
 
 ## 5. Vérifier et arrêter sans supprimer les données
 ~~~powershell
