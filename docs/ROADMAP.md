@@ -9,6 +9,8 @@ Date de création : 20 novembre 2026. Chaque case reste non cochée tant qu'elle
 - [x] Démarrer PostgreSQL via Docker Compose ; créer la base par variables POSTGRES_DB/POSTGRES_USER.
 - [x] Vérifier par commande SQL que la base btdigit_agro existe et est accessible.
 - [x] Valider docker compose config et vérifier .env ignoré/non suivi par Git.
+- [x] Confirmer l'authentification PostgreSQL via `psql -h db -W` : réponse SQL `1`, code de sortie `0`.
+- [ ] Confirmer que l'ancien mot de passe PostgreSQL divulgué a été remplacé dans la base ET dans `.env` (sans publier le secret).
 - [ ] Consigner la réussite de l'installation, puis seulement ouvrir la phase 1.
 **Sortie** : capture ou sortie des commandes git status, docker compose ps, SELECT current_database() ; installation reproductible sur PC.
 
