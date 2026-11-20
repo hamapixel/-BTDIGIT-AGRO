@@ -169,7 +169,7 @@ class AvailabilityAndPhoneTests(TestCase):
     def test_channels_off_until_real_delivery_is_configured(self):
         response = self.client.get(reverse("auth-channels"))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"email": False, "phone": False})
+        self.assertEqual(response.json(), {"email": False, "phone": False, "whatsapp": False, "sms": False})
 
     @override_settings(**PHONE_SETTINGS)
     @patch("accounts.views.deliver_code")
@@ -197,3 +197,74 @@ class AvailabilityAndPhoneTests(TestCase):
 
     def test_email_normalisation(self):
         self.assertEqual(normalize_contact("email", " INFO@EXAMPLE.COM "), "info@example.com")
+
+
+WHATSAPP_SETTINGS = {
+    "AGRO_WHATSAPP_VERIFICATION_ENABLED": True,
+    "META_WHATSAPP_ACCESS_TOKEN": "test-only-cloud-api-token",
+    "META_WHATSAPP_PHONE_NUMBER_ID": "123456789012345",
+    "META_WHATSAPP_OTP_TEMPLATE": "btdigit_otp_copy",
+    "META_WHATSAPP_TEMPLATE_LANGUAGE": "fr",
+    "META_GRAPH_API_VERSION": "v25.0",
+}
+
+
+class WhatsAppProviderTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    @override_settings(**WHATSAPP_SETTINGS)
+    @patch("accounts.delivery.urllib.request.urlopen")
+    def test_meta_whatsapp_uses_approved_authentication_template(self, urlopen):
+        import json
+        from .delivery import deliver_code
+        urlopen.return_value.__enter__.return_value.status = 200
+        deliver_code("phone", "+22376123456", "123456", via="whatsapp")
+        request = urlopen.call_args.args[0]
+        self.assertEqual(request.full_url, "https://graph.facebook.com/v25.0/123456789012345/messages")
+        self.assertEqual(request.get_method(), "POST")
+        payload = json.loads(request.data)
+        self.assertEqual(payload["to"], "22376123456")
+        self.assertEqual(payload["template"]["name"], "btdigit_otp_copy")
+        self.assertEqual(payload["template"]["components"][0]["parameters"][0]["text"], "123456")
+        self.assertEqual(payload["template"]["components"][1]["parameters"][0]["text"], "123456")
+        self.assertEqual(payload["template"]["components"][1]["sub_type"], "url")
+        self.assertNotIn("123456", repr(request.headers))
+
+    @override_settings(**WHATSAPP_SETTINGS)
+    @patch("accounts.views.deliver_code")
+    def test_register_phone_with_explicit_whatsapp_delivery(self, deliver):
+        response = self.client.post(reverse("auth-register"), {
+            "channel": "phone",
+            "delivery": "whatsapp",
+            "contact": "+223 76 12 34 56",
+            "full_name": "Test Agricole",
+            "password": PASSWORD,
+        })
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(deliver.call_args.kwargs["via"], "whatsapp")
+
+    @override_settings(**WHATSAPP_SETTINGS)
+    def test_reject_cross_contact_delivery(self):
+        response = self.client.post(reverse("auth-register"), {
+            "channel": "email",
+            "delivery": "whatsapp",
+            "contact": "agro@example.com",
+            "full_name": "Test Agricole",
+            "password": PASSWORD,
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(get_user_model().objects.count(), 0)
+
+    @override_settings(**WHATSAPP_SETTINGS)
+    def test_channel_availability_includes_whatsapp(self):
+        response = self.client.get(reverse("auth-channels"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["whatsapp"], True)
+        self.assertEqual(response.json()["phone"], True)
+        self.assertEqual(response.json()["sms"], False)
+
+    @override_settings(**{**WHATSAPP_SETTINGS, "META_WHATSAPP_PHONE_NUMBER_ID": "invalid-host/path"})
+    def test_invalid_meta_phone_id_disables_delivery(self):
+        from .delivery import channel_available
+        self.assertFalse(channel_available("whatsapp"))
