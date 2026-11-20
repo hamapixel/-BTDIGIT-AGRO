@@ -8,7 +8,32 @@ import {
 
 type Channel = "email" | "phone";
 type Step = "register" | "login" | "complete";
-type APIError = { detail?: string; [key: string]: unknown };
+type APIError = { detail?: string | string[]; [key: string]: unknown };
+
+function explainAPIError(data: APIError, status: number): string {
+  // DRF renvoie souvent { contact: ["..."] } ou { password: ["..."] },
+  // et pas un champ detail. Ne plus cacher la raison d'un formulaire refusé.
+  const labels: Record<string, string> = {
+    contact: "Téléphone ou email",
+    phone: "Téléphone",
+    email: "Email",
+    password: "Mot de passe",
+    full_name: "Nom complet",
+    channel: "Méthode d'inscription",
+    identifier: "Identifiant",
+    non_field_errors: "Formulaire",
+  };
+  const messages = Object.entries(data).flatMap(([key, value]) => {
+    const items = typeof value === "string" ? [value]
+      : Array.isArray(value) ? value.filter((item): item is string => typeof item === "string")
+      : [];
+    return items.map(item => key === "detail" ? item : `${labels[key] || key} : ${item}`);
+  });
+  if (messages.length > 0) return messages.join(" ");
+  if (status === 429) return "Trop de tentatives. Réessayez un peu plus tard.";
+  if (status >= 500) return "Le serveur est momentanément indisponible.";
+  return "Veuillez vérifier les champs du formulaire.";
+}
 
 function cookie(name: string) {
   return document.cookie.split("; ").find(part => part.startsWith(name + "="))?.split("=")[1] ?? "";
@@ -27,10 +52,7 @@ async function postAPI(path: string, body: Record<string, string>) {
     body: JSON.stringify(body),
   });
   const data: APIError = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = typeof data.detail === "string" ? data.detail : "Veuillez vérifier vos informations.";
-    throw new Error(detail);
-  }
+  if (!response.ok) throw new Error(explainAPIError(data, response.status));
   return data;
 }
 
