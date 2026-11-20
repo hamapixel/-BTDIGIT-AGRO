@@ -48,6 +48,46 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     expect(screen.getByText("Gestion des récoltes")).toBeInTheDocument();
   });
 
+  it("réduit et déploie la sidebar avec le hamburger sur ordinateur", () => {
+    window.history.replaceState({}, "", "/apercu");
+    render(<App />);
+    const collapse = screen.getByRole("button", { name: "Réduire le menu latéral" });
+    expect(collapse).toHaveAttribute("aria-expanded", "true");
+    expect(collapse).toHaveAttribute("aria-controls", "workspace-sidebar");
+
+    fireEvent.click(collapse);
+    expect(document.querySelector(".workspace")).toHaveClass("workspace-is-collapsed");
+    const expand = screen.getByRole("button", { name: "Déployer le menu latéral" });
+    expect(expand).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(expand);
+    expect(document.querySelector(".workspace")).not.toHaveClass("workspace-is-collapsed");
+    expect(screen.getByRole("button", { name: "Réduire le menu latéral" })).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("ouvre puis ferme un volet mobile sans rétrécir la sidebar", () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+      matches: true,
+      media: "(max-width: 900px)",
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    window.history.replaceState({}, "", "/apercu");
+    render(<App />);
+    const toggle = screen.getByRole("button", { name: "Ouvrir le menu latéral" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Fermer le menu latéral" })).toHaveAttribute("aria-expanded", "true");
+    expect(document.querySelector(".workspace-sidebar")).toHaveClass("sidebar-is-open");
+    expect(document.querySelector(".workspace")).not.toHaveClass("workspace-is-collapsed");
+
+    fireEvent.click(screen.getByRole("button", { name: "Fermer le menu" }));
+    expect(screen.getByRole("button", { name: "Ouvrir le menu latéral" })).toHaveAttribute("aria-expanded", "false");
+    expect(document.querySelector(".workspace-sidebar")).not.toHaveClass("sidebar-is-open");
+  });
+
   it("signale honnêtement une indisponibilité backend", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("hors ligne")));
     render(<App />);
