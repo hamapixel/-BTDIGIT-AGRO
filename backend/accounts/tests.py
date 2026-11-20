@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -31,6 +32,7 @@ PHONE_SETTINGS = {
 @override_settings(**EMAIL_SETTINGS)
 class RegistrationTests(TestCase):
     def setUp(self):
+        cache.clear()  # Le throttling DRF est partagé par cache entre les tests.
         self.payload = {
             "channel": "email",
             "contact": "  AGRI@example.com ",
@@ -161,6 +163,9 @@ class RegistrationTests(TestCase):
 
 
 class AvailabilityAndPhoneTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
     def test_channels_off_until_real_delivery_is_configured(self):
         response = self.client.get(reverse("auth-channels"))
         self.assertEqual(response.status_code, 200)
