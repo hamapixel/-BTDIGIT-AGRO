@@ -3,6 +3,43 @@
 **Version sur la branche `feature/phase-02-authentication` — PR #5 en brouillon.**
 À la demande de l'utilisateur, tous les parcours visibles de codes SMS, WhatsApp et email ont été retirés.
 
+## Correctif des refus d'inscription en développement (port 15173)
+
+Si le formulaire affichait un message vague (« Veuillez vérifier les champs
+du formulaire »), l'application tournait dans le navigateur sur
+`http://127.0.0.1:15173`, mais les paramètres CSRF initiaux autorisaient
+seulement `localhost:5173`. Avec le proxy Vite `/api`, Django reçoit un
+`Origin` différent de son `Host` interne et peut refuser les POST avec
+**HTTP 403** avant de consulter PostgreSQL.
+
+La branche corrige les valeurs par défaut ET le service `api` dans
+`compose.yaml`, en respectant le port `AGRO_WEB_PORT`. Pas de désactivation
+de CSRF et pas de modification destructive en base.
+
+~~~powershell
+cd "$HOME\Desktop\btdigit-agro"
+git switch feature/phase-02-authentication
+git pull --ff-only origin feature/phase-02-authentication
+docker compose config --quiet
+docker compose up -d --no-deps --force-recreate api web
+docker compose exec api python manage.py check
+docker compose exec api python -c "from django.conf import settings; print('Origines CSRF :', settings.CSRF_TRUSTED_ORIGINS); print('Mode debug local :', settings.DEBUG)"
+docker compose exec api python manage.py test
+docker compose exec web npm test
+~~~
+
+L'affichage attendu inclut `http://127.0.0.1:15173` et
+`http://localhost:15173`. Le mode DEBUG local doit être vrai pour un
+site de développement HTTP (cookies non Secure) ; **ne jamais** activer
+DEBUG en production.
+
+Réessayer l'inscription après `Ctrl+F5` en utilisant son propre numéro.
+Si une erreur apparaît encore, son texte inclut désormais les champs de
+validation ou le code HTTP (par ex. CSRF HTTP 403). Consulter si nécessaire
+`docker compose logs --tail=60 api` en masquant toute information sensible.
+Ne jamais coller le mot de passe, les cookies, les jetons CSRF ou le fichier
+`.env` dans une conversation.
+
 ## Parcours attendu
 
 1. Choisir **Téléphone** ou **Email** sur `/inscription`.
