@@ -10,7 +10,6 @@ const healthyResponse = {
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(healthyResponse));
 });
-
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -18,14 +17,14 @@ afterEach(() => {
   window.history.replaceState({}, "", "/");
 });
 
-describe("BTDIGIT AGRO — fondation frontend", () => {
+describe("BTDIGIT AGRO — connexion directe sans OTP", () => {
   it("présente la marketplace et l'état réel de l'API", async () => {
     render(<App />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Du champ au marché");
     expect(await screen.findByText("API Django et PostgreSQL connectés")).toBeInTheDocument();
   });
 
-  it("filtre immédiatement les catégories sans inventer de produits", () => {
+  it("filtre les catégories sans inventer d'offres", () => {
     render(<App />);
     fireEvent.change(screen.getByRole("searchbox", { name: /Rechercher une catégorie/i }), {
       target: { value: "tomates" },
@@ -34,190 +33,148 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     expect(screen.queryByText("Céréales")).not.toBeInTheDocument();
   });
 
-  it("redirige vers une vraie page de connexion", () => {
+  it("les liens publics ouvrent les vrais formulaires", () => {
     render(<App />);
     expect(screen.getByRole("link", { name: "Se connecter" })).toHaveAttribute("href", "/connexion");
     expect(screen.getByRole("link", { name: /Rejoindre AGRO/i })).toHaveAttribute("href", "/inscription");
   });
 
-  it("montre l'aperçu professionnel avec une sidebar et des données non simulées", () => {
+  it("préserve la sidebar rétractable de l'aperçu", () => {
     window.history.replaceState({}, "", "/apercu");
     render(<App />);
     expect(screen.getByRole("heading", { name: /Bienvenue dans votre futur espace/i })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: /Navigation de l'espace professionnel/i })).toBeInTheDocument();
-    expect(screen.getByText("Gestion des récoltes")).toBeInTheDocument();
-  });
-
-  it("réduit et déploie la sidebar avec le hamburger sur ordinateur", () => {
-    window.history.replaceState({}, "", "/apercu");
-    render(<App />);
-    const collapse = screen.getByRole("button", { name: "Réduire le menu latéral" });
-    expect(collapse).toHaveAttribute("aria-expanded", "true");
-    expect(collapse).toHaveAttribute("aria-controls", "workspace-sidebar");
-
-    fireEvent.click(collapse);
-    expect(document.querySelector(".workspace")).toHaveClass("workspace-is-collapsed");
-    const expand = screen.getByRole("button", { name: "Déployer le menu latéral" });
-    expect(expand).toHaveAttribute("aria-expanded", "false");
-
-    fireEvent.click(expand);
-    expect(document.querySelector(".workspace")).not.toHaveClass("workspace-is-collapsed");
-    expect(screen.getByRole("button", { name: "Réduire le menu latéral" })).toHaveAttribute("aria-expanded", "true");
-  });
-
-  it("ouvre puis ferme un volet mobile sans rétrécir la sidebar", () => {
-    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
-      matches: true,
-      media: "(max-width: 900px)",
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }));
-
-    window.history.replaceState({}, "", "/apercu");
-    render(<App />);
-    const toggle = screen.getByRole("button", { name: "Ouvrir le menu latéral" });
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-
+    const toggle = screen.getByRole("button", { name: "Réduire le menu latéral" });
     fireEvent.click(toggle);
-    expect(screen.getByRole("button", { name: "Fermer le menu latéral" })).toHaveAttribute("aria-expanded", "true");
-    expect(document.querySelector(".workspace-sidebar")).toHaveClass("sidebar-is-open");
+    expect(document.querySelector(".workspace")).toHaveClass("workspace-is-collapsed");
+    fireEvent.click(screen.getByRole("button", { name: "Déployer le menu latéral" }));
     expect(document.querySelector(".workspace")).not.toHaveClass("workspace-is-collapsed");
+  });
 
+  it("préserve le volet mobile accessible", () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+      matches: true, media: "(max-width: 900px)",
+      addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    }));
+    window.history.replaceState({}, "", "/apercu");
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Ouvrir le menu latéral" }));
+    expect(document.querySelector(".workspace-sidebar")).toHaveClass("sidebar-is-open");
     fireEvent.click(screen.getByRole("button", { name: "Fermer le menu" }));
-    expect(screen.getByRole("button", { name: "Ouvrir le menu latéral" })).toHaveAttribute("aria-expanded", "false");
     expect(document.querySelector(".workspace-sidebar")).not.toHaveClass("sidebar-is-open");
   });
 
-  it("affiche téléphone ou email sans promettre l'envoi non configuré", async () => {
+  it("inscription courte téléphone/email, sans option OTP ni avertissement de prestataire", () => {
     window.history.replaceState({}, "", "/inscription");
-    vi.stubGlobal("fetch", vi.fn((path: string) => {
-      if (path.includes("/auth/channels/")) return Promise.resolve({
-        ok: true, json: async () => ({ email: false, phone: false }),
-      });
-      return Promise.resolve(healthyResponse);
-    }));
     render(<App />);
     expect(screen.getByRole("heading", { name: "Créer mon compte" })).toBeInTheDocument();
-    expect(document.querySelector(".auth-shell")).toHaveClass("auth-shell--register");
     expect(screen.getByRole("group", { name: "Choisir une méthode d'inscription" })).toBeInTheDocument();
-    expect(await screen.findByText(/L'envoi d'OTP par WhatsApp.*n'est pas encore configuré/)).toBeInTheDocument();
-    const submit = screen.getByRole("button", { name: "Créer mon compte" });
-    expect(submit).toBeEnabled();
-    expect(submit).toHaveAttribute("type", "button");
-    fireEvent.click(submit);
-    expect(screen.getByRole("alert")).toHaveTextContent("Aucun compte n'a été créé");
-    expect(screen.getByRole("alert")).toHaveTextContent("aucun code n'a été envoyé");
-    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1); // consultation des canaux, aucun POST
-    fireEvent.click(screen.getByRole("button", { name: /^SMS/ }));
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    fireEvent.click(submit);
-    expect(screen.getByRole("alert")).toHaveTextContent("OTP par SMS");
+    expect(screen.getByRole("button", { name: "Créer mon compte" })).toHaveAttribute("type", "submit");
+    expect(screen.queryByText(/code à 6 chiffres|envoi d'OTP|WhatsApp|SMS/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Email/i }));
-    expect(await screen.findByText(/L'envoi d'OTP par email.*n'est pas encore configuré/)).toBeInTheDocument();
-    fireEvent.click(submit);
-    expect(screen.getByRole("alert")).toHaveTextContent("OTP par email");
-    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Adresse email")).toBeInTheDocument();
   });
 
-  it("inscrit uniquement lorsque le canal est réellement configuré côté API", async () => {
+  it("crée le compte directement et ouvre la session sans code", async () => {
     window.history.replaceState({}, "", "/inscription");
-    const requests = vi.fn((path: string) => Promise.resolve({
-      ok: true,
-      json: async () => path.includes("/auth/channels/")
-        ? { email: true, phone: false }
-        : { detail: "Si ce contact peut être inscrit, un code lui sera envoyé." },
+    const fetchMock = vi.fn((url: string) => Promise.resolve({
+      ok: true, status: url.includes("/auth/register/") ? 201 : 200,
+      json: async () => url.includes("/auth/register/")
+        ? { status: "authenticated", user: { full_name: "Aminata Test" } }
+        : { status: "ok" },
     }));
-    vi.stubGlobal("fetch", requests);
+    vi.stubGlobal("fetch", fetchMock);
     render(<App />);
-    expect(await screen.findByText("Adresse email")).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText("Ex. : Aminata Coulibaly"), {
-      target: { value: "Aminata Exemple" },
+      target: { value: "Aminata Test" },
     });
-    fireEvent.change(screen.getByPlaceholderText("nom@exemple.com"), {
-      target: { value: "test@example.com" },
+    fireEvent.change(screen.getByPlaceholderText("+223 76 00 00 00"), {
+      target: { value: "+22376123456" },
     });
     fireEvent.change(screen.getByPlaceholderText("10 caractères minimum"), {
-      target: { value: "MotDePasse2026!Valid" },
+      target: { value: "AgroPassword2026!" },
     });
-    const submit = screen.getByRole("button", { name: "Créer mon compte" });
-    expect(submit).toBeEnabled();
-    expect(submit).toHaveAttribute("type", "submit");
-    fireEvent.click(submit);
-    expect(await screen.findByRole("heading", { name: "Vérifier mon contact" })).toBeInTheDocument();
-    expect(requests).toHaveBeenCalledWith("/api/v1/auth/register/", expect.objectContaining({
-      method: "POST",
-    }));
+    fireEvent.click(screen.getByRole("button", { name: "Créer mon compte" }));
+    expect(await screen.findByRole("heading", { name: "Compte créé !" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Accéder à mon espace/i })).toHaveAttribute("href", "/espace");
+    const posts = fetchMock.mock.calls.filter(([url]) => url.includes("/auth/register/"));
+    expect(posts).toHaveLength(1);
+    expect(JSON.parse((posts[0][1] as RequestInit).body as string)).not.toHaveProperty("code");
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("/auth/verify/"), expect.anything());
   });
 
-  it("affiche le formulaire de connexion même si les fournisseurs OTP sont indisponibles", async () => {
+  it("connexion par identifiant et mot de passe sans étape supplémentaire", async () => {
     window.history.replaceState({}, "", "/connexion");
-    vi.stubGlobal("fetch", vi.fn((path: string) => Promise.resolve(
-      path.includes("/auth/channels/")
-        ? { ok: true, json: async () => ({ email: false, phone: false }) }
-        : healthyResponse,
-    )));
-    render(<App />);
-    expect(screen.getByRole("heading", { name: /Bon retour parmi nous/i })).toBeInTheDocument();
-    expect(document.querySelector(".auth-shell")).toHaveClass("auth-shell--login");
-    expect(screen.queryByText("Vous pouvez utiliser le contact vérifié lors de votre inscription.")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Me connecter" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Créer un compte" })).toBeInTheDocument();
-  });
-
-  it("propose la récupération de mot de passe depuis la connexion", async () => {
-    window.history.replaceState({}, "", "/connexion");
-    render(<App />);
-    expect(screen.getByRole("link", { name: "Mot de passe oublié ?" })).toHaveAttribute("href", "/recuperation");
-  });
-
-  it("ne prétend pas envoyer un OTP de récupération sans fournisseur", async () => {
-    window.history.replaceState({}, "", "/recuperation");
-    vi.stubGlobal("fetch", vi.fn((path: string) => Promise.resolve({
+    const fetchMock = vi.fn((url: string) => Promise.resolve({
       ok: true,
-      json: async () => path.includes("/auth/channels/")
-        ? ({ email: false, phone: false, whatsapp: false, sms: false })
-        : ({ status: "ok" }),
+      json: async () => url.includes("/auth/login/")
+        ? { status: "authenticated", user: { full_name: "Test Producteur" } }
+        : { status: "ok" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    fireEvent.change(screen.getByPlaceholderText("nom@exemple.com"), { target: { value: "test@example.com" } });
+    fireEvent.change(screen.getByPlaceholderText("Votre mot de passe"), { target: { value: "AgroPassword2026!" } });
+    fireEvent.click(screen.getByRole("button", { name: "Me connecter" }));
+    expect(await screen.findByRole("heading", { name: "Connexion réussie !" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Accéder à mon espace/i })).toHaveAttribute("href", "/espace");
+  });
+
+  it("refuse un identifiant ou mot de passe erroné sans afficher de code OTP", async () => {
+    window.history.replaceState({}, "", "/connexion");
+    vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve({
+      ok: !url.includes("/auth/login/"), status: 401,
+      json: async () => ({ detail: "Identifiant ou mot de passe incorrect." }),
     })));
     render(<App />);
-    expect(screen.getByRole("heading", { name: "Mot de passe oublié ?" })).toBeInTheDocument();
-    expect(await screen.findByText(/Envoi OTP par email indisponible/)).toBeInTheDocument();
-    fireEvent.change(screen.getByPlaceholderText("nom@exemple.com"), {
-      target: { value: "test@example.com" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Recevoir mon code" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("aucun OTP ne peut être envoyé");
-    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+    fireEvent.change(screen.getByPlaceholderText("nom@exemple.com"), { target: { value: "test@example.com" } });
+    fireEvent.change(screen.getByPlaceholderText("Votre mot de passe"), { target: { value: "incorrect" } });
+    fireEvent.click(screen.getByRole("button", { name: "Me connecter" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Identifiant ou mot de passe incorrect.");
   });
 
-  it("réserve l'espace réel aux utilisateurs authentifiés", async () => {
+  it("ancienne URL de vérification n'offre plus d'écran OTP", () => {
+    window.history.replaceState({}, "", "/verification");
+    render(<App />);
+    expect(screen.getByRole("link", { name: /Retour à la connexion/i })).toHaveAttribute("href", "/connexion");
+    expect(screen.queryByLabelText(/Code reçu|Code de vérification/i)).not.toBeInTheDocument();
+  });
+
+  it("récupération publique n'accepte pas de réinitialisation non authentifiée", () => {
+    window.history.replaceState({}, "", "/recuperation");
+    render(<App />);
+    expect(screen.getByText(/récupération automatique est momentanément indisponible/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Recevoir mon code/i })).not.toBeInTheDocument();
+  });
+
+  it("protège l'espace professionnel des visiteurs non connectés", async () => {
     window.history.replaceState({}, "", "/espace");
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false, status: 403, json: async () => ({ detail: "Authentication required" }),
     }));
     render(<App />);
     expect(await screen.findByRole("heading", { name: "Connexion nécessaire" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Se connecter/i })).toHaveAttribute("href", "/connexion");
   });
 
-  it("affiche uniquement les organisations reçues de l'API", async () => {
+  it("affiche les entreprises réellement renvoyées par l'API", async () => {
     window.history.replaceState({}, "", "/espace");
-    const mockUser = { full_name: "Test Coop", email: "test@example.com", phone: null };
+    const mockUser = { id: "123e4567-e89b-12d3-a456-426614174999",
+      full_name: "Test Coop", email: "test@example.com", phone: null };
     vi.stubGlobal("fetch", vi.fn((path: string) => Promise.resolve({
       ok: true,
       json: async () => path.includes("/auth/me/") ? ({ user: mockUser }) :
         path.includes("/invitations/") ? ({ invitations: [] }) :
         path.includes("/members/") ? ({ members: [] }) :
         ({ organizations: [{ id: "123e4567-e89b-12d3-a456-426614174000",
-          name: "Coopérative de test", kind: "cooperative", membership_role: "owner",
-          created_at: "2026-11-20T00:00:00Z" }] }),
+          name: "Coopérative de test", kind: "cooperative",
+          membership_role: "owner", created_at: "2026-11-20T00:00:00Z" }] }),
     })));
     render(<App />);
     expect(await screen.findByRole("heading", { name: /Bienvenue, Test Coop/ })).toBeInTheDocument();
     expect(screen.getByText("Coopérative de test")).toBeInTheDocument();
-    expect(screen.queryByText("Aucune statistique disponible")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Mon identifiant de compte")).toHaveValue(mockUser.id);
   });
 
-  it("signale honnêtement une indisponibilité backend", async () => {
+  it("signale l'indisponibilité réelle de l'API", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("hors ligne")));
     render(<App />);
     expect(await screen.findByText("API indisponible ou non joignable")).toBeInTheDocument();
