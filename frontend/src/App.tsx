@@ -263,8 +263,8 @@ function PublicLanding() {
 export default function App() {
   const path = window.location.pathname;
   if (path === "/apercu") return <WorkspacePreview />;
-  if (["/inscription", "/connexion", "/verification"].includes(path)) return <AuthPage />;
-  if (path === "/recuperation") return <RecoveryPage />;
+  if (["/inscription", "/connexion"].includes(path)) return <AuthPage />;
+  if (["/recuperation", "/verification"].includes(path)) return <RecoveryPage />;
   if (["/espace", "/superadmin"].includes(path)) return <OrganizationPage />;
   return <PublicLanding />;
 }
