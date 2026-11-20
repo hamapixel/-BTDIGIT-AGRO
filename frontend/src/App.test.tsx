@@ -34,10 +34,10 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     expect(screen.queryByText("Céréales")).not.toBeInTheDocument();
   });
 
-  it("signale que la connexion des utilisateurs est une étape future", () => {
+  it("redirige vers une vraie page de connexion", () => {
     render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
-    expect(screen.getByRole("dialog")).toHaveTextContent("disponible à la phase 2");
+    expect(screen.getByRole("link", { name: "Se connecter" })).toHaveAttribute("href", "/connexion");
+    expect(screen.getByRole("link", { name: /Rejoindre AGRO/i })).toHaveAttribute("href", "/inscription");
   });
 
   it("montre l'aperçu professionnel avec une sidebar et des données non simulées", () => {
@@ -86,6 +86,36 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     fireEvent.click(screen.getByRole("button", { name: "Fermer le menu" }));
     expect(screen.getByRole("button", { name: "Ouvrir le menu latéral" })).toHaveAttribute("aria-expanded", "false");
     expect(document.querySelector(".workspace-sidebar")).not.toHaveClass("sidebar-is-open");
+  });
+
+  it("affiche téléphone ou email sans promettre l'envoi non configuré", async () => {
+    window.history.replaceState({}, "", "/inscription");
+    vi.stubGlobal("fetch", vi.fn((path: string) => {
+      if (path.includes("/auth/channels/")) return Promise.resolve({
+        ok: true, json: async () => ({ email: false, phone: false }),
+      });
+      return Promise.resolve(healthyResponse);
+    }));
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Créer mon compte" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Choisir une méthode d'inscription" })).toBeInTheDocument();
+    expect(await screen.findByText(/L'envoi de SMS.*n'est pas encore configuré/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Créer mon compte" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Email/i }));
+    expect(await screen.findByText(/L'envoi d'emails.*n'est pas encore configuré/)).toBeInTheDocument();
+  });
+
+  it("affiche le formulaire de connexion même si les fournisseurs OTP sont indisponibles", async () => {
+    window.history.replaceState({}, "", "/connexion");
+    vi.stubGlobal("fetch", vi.fn((path: string) => Promise.resolve(
+      path.includes("/auth/channels/")
+        ? { ok: true, json: async () => ({ email: false, phone: false }) }
+        : healthyResponse,
+    )));
+    render(<App />);
+    expect(screen.getByRole("heading", { name: /Bon retour parmi nous/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Me connecter" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Créer un compte" })).toBeInTheDocument();
   });
 
   it("signale honnêtement une indisponibilité backend", async () => {
