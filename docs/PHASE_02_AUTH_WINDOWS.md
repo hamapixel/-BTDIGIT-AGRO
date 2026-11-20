@@ -40,6 +40,16 @@ docker compose ps
 
 Ne jamais utiliser `docker compose down -v`.
 
+## 2 bis. Vérifier les dimensions du login corrigé
+
+Ouvrir `http://127.0.0.1:15173/connexion` puis `/inscription`.
+
+- Sur PC 12–16 pouces (notamment 1366×768 et 1920×1080) : carte de connexion recentrée et compacte ; bouton principal et lien « Créer un compte » visibles.
+- Sur téléphone 320, 375 et 430 px : logo horizontal compact ; champs et bouton visibles, sans défilement horizontal. Un défilement vertical reste autorisé sur petits appareils/avec clavier affiché.
+- Sur tablette : les deux colonnes passent à une seule sans laisser un panneau vert de pleine hauteur.
+- Les formulaires doivent rester entièrement utilisables au clavier, sans texte ni champ coupés.
+- Si le serveur Vite tournait déjà, un rechargement forcé `Ctrl + F5` suffit après `git pull` (le dossier frontend est monté en volume Docker).
+
 ## 3. Vérifier les routes
 
 ~~~powershell
