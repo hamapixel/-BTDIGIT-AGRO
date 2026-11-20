@@ -164,6 +164,54 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     expect(screen.getByRole("button", { name: "Créer un compte" })).toBeInTheDocument();
   });
 
+  it("propose la récupération de mot de passe depuis la connexion", async () => {
+    window.history.replaceState({}, "", "/connexion");
+    render(<App />);
+    expect(screen.getByRole("link", { name: "Mot de passe oublié ?" })).toHaveAttribute("href", "/recuperation");
+  });
+
+  it("ne prétend pas envoyer un OTP de récupération sans fournisseur", async () => {
+    window.history.replaceState({}, "", "/recuperation");
+    vi.stubGlobal("fetch", vi.fn((path: string) => Promise.resolve({
+      ok: true,
+      json: async () => path.includes("/auth/channels/")
+        ? ({ email: false, phone: false, whatsapp: false, sms: false })
+        : ({ status: "ok" }),
+    })));
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Mot de passe oublié ?" })).toBeInTheDocument();
+    expect(await screen.findByText(/Envoi OTP par email indisponible/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Recevoir mon code" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("aucun OTP ne peut être envoyé");
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+  });
+
+  it("réserve l'espace réel aux utilisateurs authentifiés", async () => {
+    window.history.replaceState({}, "", "/espace");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: false, status: 403, json: async () => ({ detail: "Authentication required" }),
+    }));
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: "Connexion nécessaire" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Se connecter/i })).toHaveAttribute("href", "/connexion");
+  });
+
+  it("affiche uniquement les organisations reçues de l'API", async () => {
+    window.history.replaceState({}, "", "/espace");
+    const mockUser = { full_name: "Test Coop", email: "test@example.com", phone: null };
+    vi.stubGlobal("fetch", vi.fn((path: string) => Promise.resolve({
+      ok: true,
+      json: async () => path.includes("/auth/me/") ? ({ user: mockUser }) :
+        ({ organizations: [{ id: "123e4567-e89b-12d3-a456-426614174000",
+          name: "Coopérative de test", kind: "cooperative", membership_role: "owner",
+          created_at: "2026-11-20T00:00:00Z" }] }),
+    })));
+    render(<App />);
+    expect(await screen.findByRole("heading", { name: /Bienvenue, Test Coop/ })).toBeInTheDocument();
+    expect(screen.getByText("Coopérative de test")).toBeInTheDocument();
+    expect(screen.queryByText("Aucune statistique disponible")).not.toBeInTheDocument();
+  });
+
   it("signale honnêtement une indisponibilité backend", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("hors ligne")));
     render(<App />);
