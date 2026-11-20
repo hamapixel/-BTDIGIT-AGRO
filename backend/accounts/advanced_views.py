@@ -170,7 +170,7 @@ class OrganizationListCreateView(APIView):
 
     def get(self, request):
         qs = Membership.objects.select_related("organization").filter(
-            user=request.user
+            user=request.user, accepted_at__isnull=False
         ).order_by("organization__name")
         return Response({"organizations": [_org_payload(m.organization, m) for m in qs]})
 
@@ -184,13 +184,13 @@ class OrganizationListCreateView(APIView):
                 kind=serializer.validated_data["kind"],
                 created_by=request.user,
             )
-            member = Membership.objects.create(organization=org, user=request.user, role="owner")
+            member = Membership.objects.create(organization=org, user=request.user, role="owner", accepted_at=timezone.now())
         return Response({"organization": _org_payload(org, member)}, status=201)
 
 
 def _membership_or_404(user, org_id):
     member = Membership.objects.select_related("organization").filter(
-        organization_id=org_id, user=user
+        organization_id=org_id, user=user, accepted_at__isnull=False
     ).first()
     if member is None:
         raise Http404
@@ -230,6 +230,7 @@ class OrganizationMembersView(APIView):
         return Response({"members": [{
             "id": str(m.id), "user_id": str(m.user_id),
             "name": m.user.get_full_name(), "role": m.role,
+            "accepted": bool(m.accepted_at),
         } for m in members]})
 
     @method_decorator(csrf_protect)
@@ -257,7 +258,7 @@ class OrganizationMembersView(APIView):
         except IntegrityError:
             # savepoint rollback ; la transaction externe et les futures requêtes restent valides.
             return Response({"detail": "Ce compte est déjà membre."}, status=400)
-        return Response({"member": {"id": str(member.id), "role": member.role}}, status=201)
+        return Response({"member": {"id": str(member.id), "role": member.role, "status": "invited"}}, status=201)
 
 
 class OrganizationMemberDetailView(APIView):
@@ -318,3 +319,47 @@ class SuperadminOrganizationsView(APIView):
             "members_count": org.members_count,
             "created_at": org.created_at.isoformat(),
         } for org in qs]})
+
+
+class OrganizationInvitationsView(APIView):
+    """Un utilisateur accepte explicitement une adhésion avant tout accès."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        pending = Membership.objects.select_related("organization").filter(
+            user=request.user, accepted_at__isnull=True,
+        ).order_by("-created_at")
+        return Response({"invitations": [{
+            "id": str(m.id),
+            "organization_id": str(m.organization_id),
+            "organization_name": m.organization.name,
+            "kind": m.organization.kind,
+            "role": m.role,
+        } for m in pending]})
+
+
+class OrganizationInvitationActionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @method_decorator(csrf_protect)
+    def post(self, request, invitation_id):
+        with transaction.atomic():
+            invite = Membership.objects.select_for_update().filter(
+                id=invitation_id, user=request.user, accepted_at__isnull=True,
+            ).first()
+            if invite is None:
+                raise Http404
+            invite.accepted_at = timezone.now()
+            invite.save(update_fields=["accepted_at"])
+        return Response({"status": "accepted", "organization_id": str(invite.organization_id)})
+
+    @method_decorator(csrf_protect)
+    def delete(self, request, invitation_id):
+        with transaction.atomic():
+            invite = Membership.objects.select_for_update().filter(
+                id=invitation_id, user=request.user, accepted_at__isnull=True,
+            ).first()
+            if invite is None:
+                raise Http404
+            invite.delete()
+        return Response(status=204)
