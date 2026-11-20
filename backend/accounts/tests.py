@@ -157,6 +157,51 @@ class RegistrationWithoutOTPTests(TestCase):
         ):
             self.assertEqual(self.client.post(endpoint).status_code, 404)
 
+    def test_csrf_accepts_vite_public_origin_and_rejects_unknown_origin(self):
+        from django.test import override_settings
+
+        # Le navigateur voit 15173, mais Vite remet Host: api:8000 à Django.
+        # Ce test simule le vrai proxy au lieu des requêtes sans Origin.
+        with override_settings(
+            ALLOWED_HOSTS=["testserver", "api", "localhost", "127.0.0.1"],
+            CSRF_TRUSTED_ORIGINS=[
+                "http://localhost:15173", "http://127.0.0.1:15173",
+                "http://localhost:5173", "http://127.0.0.1:5173",
+            ],
+            CSRF_COOKIE_SECURE=False,
+        ):
+            for index, origin in enumerate(
+                ("http://127.0.0.1:15173", "http://localhost:15173")
+            ):
+                with self.subTest(origin=origin):
+                    browser = Client(enforce_csrf_checks=True)
+                    csrf = browser.get(reverse("auth-csrf"), HTTP_HOST="api:8000")
+                    self.assertEqual(csrf.status_code, 200)
+                    self.assertIn("csrftoken", csrf.cookies)
+                    token = csrf.cookies["csrftoken"].value
+                    res = browser.post(
+                        reverse("auth-register"),
+                        {**self.data, "contact": f"csrf-{index}@example.com"},
+                        HTTP_HOST="api:8000",
+                        HTTP_ORIGIN=origin,
+                        HTTP_X_CSRFTOKEN=token,
+                    )
+                    self.assertEqual(res.status_code, 201, res.content[:150])
+            browser = Client(enforce_csrf_checks=True)
+            csrf = browser.get(reverse("auth-csrf"), HTTP_HOST="api:8000")
+            token = csrf.cookies["csrftoken"].value
+            forbidden = browser.post(
+                reverse("auth-register"),
+                {**self.data, "contact": "untrusted@example.com"},
+                HTTP_HOST="api:8000",
+                HTTP_ORIGIN="http://untrusted.example.test",
+                HTTP_X_CSRFTOKEN=token,
+            )
+            self.assertEqual(forbidden.status_code, 403)
+            self.assertFalse(
+                get_user_model().objects.filter(email="untrusted@example.com").exists()
+            )
+
     def test_registration_requires_csrf_for_browser(self):
         client = Client(enforce_csrf_checks=True)
         self.assertEqual(client.post(reverse("auth-register"), self.data).status_code, 403)
