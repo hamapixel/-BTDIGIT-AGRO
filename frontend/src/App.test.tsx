@@ -15,6 +15,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   document.documentElement.removeAttribute("data-theme");
+  window.history.replaceState({}, "", "/");
 });
 
 describe("BTDIGIT AGRO — fondation frontend", () => {
@@ -37,6 +38,14 @@ describe("BTDIGIT AGRO — fondation frontend", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
     expect(screen.getByRole("dialog")).toHaveTextContent("disponible à la phase 2");
+  });
+
+  it("montre l'aperçu professionnel avec une sidebar et des données non simulées", () => {
+    window.history.replaceState({}, "", "/apercu");
+    render(<App />);
+    expect(screen.getByRole("heading", { name: /Bienvenue dans votre futur espace/i })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: /Navigation de l'espace professionnel/i })).toBeInTheDocument();
+    expect(screen.getByText("Gestion des récoltes")).toBeInTheDocument();
   });
 
   it("signale honnêtement une indisponibilité backend", async () => {
